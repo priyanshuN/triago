@@ -1,0 +1,66 @@
+name: publish
+
+# Publishing happens here rather than from a laptop so npm can attach a
+# provenance attestation: a verifiable link from the published tarball back to
+# the exact public commit and workflow that produced it. For a tool that asks
+# people to run a local server holding a token, "trust me, I built it" is a
+# weaker claim than a signed one.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Actually publish (leave off for a rehearsal)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # required for --provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+        env:
+          TRIAGO_NO_BROWSER: "1"
+
+      - name: Release tag and package version must agree
+        if: github.event_name == 'release'
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "release tag ($tag) does not match package.json ($pkg)"
+            exit 1
+          fi
+
+      - name: Refuse to publish while the package is marked private
+        run: |
+          node -e "if (require('./package.json').private) {
+            console.error('package.json still has \"private\": true — remove it deliberately before releasing');
+            process.exit(1);
+          }"
+
+      - name: Publish with provenance
+        if: github.event_name == 'release' || inputs.publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Rehearsal only — nothing was published
+        if: github.event_name == 'workflow_dispatch' && !inputs.publish
+        run: echo "Build, typecheck and tests passed. Re-run with publish=true, or cut a release."
