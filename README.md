@@ -287,6 +287,12 @@ have to answer*, not for annotating a patch line by line. If what you want is
 line comments on a diff, use your code host's review UI or a dedicated diff
 review tool; triago has nothing to add there.
 
+## Design
+
+[DESIGN.md](DESIGN.md) covers why triago is shaped this way: one zod schema behind
+all three interfaces, disk as the source of truth, the lazy daemon, why there are
+four decision verbs instead of three, and what is deliberately not built.
+
 ## Testing it
 
 `npm test` runs 19 integration tests (auth, long-poll wake-up, exit codes, SSE,
