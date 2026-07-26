@@ -1,134 +1,191 @@
 /*
- * Tokens and component CSS ported verbatim from the design pass that was
- * verified in both themes (see SPEC.md §Design). Theme rules are token-level:
- * light on :root, dark via prefers-color-scheme, and data-theme overrides
- * both directions for the explicit toggle.
+ * IBM Plex, served from triago itself rather than fetched from Google Fonts.
+ *
+ * Two reasons, in order. The CSP this app ships under is `style-src 'self'`
+ * and `font-src 'self'`, so a remote @import is blocked before it resolves —
+ * the design would have rendered in system-ui with nothing in the UI to say
+ * so. And the README promises no network calls; a webfont request is a network
+ * call that tells a third party when you open a review.
+ *
+ * Latin-1 subsets, and only the weights the stylesheet below actually asks
+ * for: sans 400/500/600/700 + italic, mono 400/500/700. Characters outside
+ * Latin-1 fall through to the next family in the stack per-character, which is
+ * why no unicode-range is declared. Vendored under the SIL OFL (see OFL.txt in
+ * this directory); Vite fingerprints them into the bundle at build time, so
+ * there is no font dependency in package.json and nothing to install.
+ */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/IBMPlexSans-Regular-Latin1.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/IBMPlexSans-Italic-Latin1.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/IBMPlexSans-Medium-Latin1.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("./fonts/IBMPlexSans-SemiBold-Latin1.woff2") format("woff2");
+}
+/* 700 is never set by this stylesheet, but rendered markdown sets it: a doc
+   card's headings and **bold** would otherwise be synthesised from SemiBold. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/IBMPlexSans-Bold-Latin1.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/IBMPlexMono-Regular-Latin1.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/IBMPlexMono-Medium-Latin1.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/IBMPlexMono-Bold-Latin1.woff2") format("woff2");
+}
+
+/*
+ * Tokens and component CSS. Three rules govern this file:
+ *   1. No two type steps share both family and weight, so 16.5/500 sans and
+ *      14.5/400 sans never read as the same level despite sitting 2px apart.
+ *   2. Every text colour clears 4.5:1 on its own ground. --faint is the floor.
+ *   3. Hue belongs to severity. Decisions are monochrome and are told apart by
+ *      shape: solid fill = fix, ink outline = discuss, dashed = defer,
+ *      soft outline + strike = skip, hairline dash = undecided.
+ * Theme rules stay token-level: light on :root, dark via prefers-color-scheme,
+ * data-theme overrides both for the explicit toggle.
  */
 :root {
-  --ground: #f5f6f7;
+  --ground: #f6f5f2;
   --surface: #ffffff;
-  --raise: #eff1f3;
-  --line: #dfe3e7;
-  --line-soft: #e9ecef;
-  --text: #1b2530;
-  --dim: #5b6873;
-  --faint: #8b97a1;
-  --accent: #a96f10;
-  --accent-soft: rgba(169, 111, 16, 0.1);
-  --sev-crit: #c93c41;
-  --sev-high: #bc6a1e;
-  --sev-med: #967d1e;
-  --sev-low: #5f7387;
-  --fix: #2e7d36;
-  --fix-soft: rgba(46, 125, 54, 0.11);
-  --skip: #6b7680;
-  --skip-soft: rgba(107, 118, 128, 0.13);
-  --disc: #6a55a8;
-  --disc-soft: rgba(106, 85, 168, 0.11);
-  --defer: #2a6fb5;
-  --defer-soft: rgba(42, 111, 181, 0.11);
-  --add-bg: rgba(46, 125, 54, 0.08);
-  --del-bg: rgba(201, 60, 65, 0.07);
-  --code-bg: #f0f2f4;
-  --shadow: 0 1px 2px rgba(15, 23, 30, 0.05), 0 4px 16px rgba(15, 23, 30, 0.05);
-  /* Type scale: six steps, all driven by one multiplier. Every font-size in
-     this file resolves to a step, so the UI stays a system — and --ui-scale
-     lets the whole thing grow or shrink without touching any component. */
+  --raise: #f1eee8;
+  --line: #ddd6c9;
+  --line-soft: #ece8e0;
+  --text: #1c1a17;
+  --dim: #6b6255;
+  --faint: #7d7365;
+  --accent: #2a6fb5;
+  --accent-soft: rgba(42, 111, 181, 0.09);
+  --sev-crit: #a93226;
+  --sev-high: #9a5b1e;
+  --sev-med: #6b6255;
+  --sev-low: #8a8071;
+  --diff-add: #2f6b39;
+  --diff-del: #a93226;
+  --add-bg: rgba(47, 107, 57, 0.08);
+  --del-bg: rgba(169, 50, 38, 0.07);
+  --code-bg: #f4f2ed;
+  --shadow: 0 1px 2px rgba(28, 26, 23, 0.05), 0 4px 16px rgba(28, 26, 23, 0.05);
+  /* Type scale: six steps, one multiplier, no two steps closer than 2px.
+     --ui-scale grows or shrinks the whole system without touching components. */
   --ui-scale: 1;
-  --fs-micro: calc(12px * var(--ui-scale)); /* uppercase labels, kbd, rail meta */
-  --fs-sm: calc(13px * var(--ui-scale));    /* chips, tally, verdict, diff */
-  --fs-base: calc(14px * var(--ui-scale));  /* detail prose, comments, buttons */
-  --fs-md: calc(15px * var(--ui-scale));    /* row summaries, doc body */
-  --fs-lg: calc(18px * var(--ui-scale));    /* card + brand titles */
-  --fs-xl: calc(22px * var(--ui-scale));    /* doc h1 */
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code",
-    "Ubuntu Sans Mono", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
-  --sans: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto,
+  --fs-micro: calc(11px * var(--ui-scale));  /* uppercase labels, kbd, verdict */
+  --fs-sm: calc(12.5px * var(--ui-scale));   /* mono paths, chips, tally, diff */
+  --fs-base: calc(14.5px * var(--ui-scale)); /* prose, comments, buttons */
+  --fs-md: calc(16.5px * var(--ui-scale));   /* row summaries, doc body */
+  --fs-lg: calc(22px * var(--ui-scale));     /* card + brand titles */
+  --fs-xl: calc(26px * var(--ui-scale));     /* doc h1 */
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", "JetBrains Mono",
+    "Cascadia Code", Menlo, Consolas, monospace;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", "Noto Sans", Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #0f1317;
-    --surface: #151a20;
-    --raise: #1b222a;
-    --line: #232c35;
-    --line-soft: #1d252d;
-    --text: #dee5ea;
-    --dim: #8a97a0;
-    --faint: #5d6b75;
-    --accent: #e8b04b;
-    --accent-soft: rgba(232, 176, 75, 0.09);
-    --sev-crit: #ec5d5d;
-    --sev-high: #e8964a;
-    --sev-med: #d7ba5a;
-    --sev-low: #7e93a8;
-    --fix: #57ab5a;
-    --fix-soft: rgba(87, 171, 90, 0.12);
-    --skip: #77828b;
-    --skip-soft: rgba(119, 130, 139, 0.14);
-    --disc: #9d8bd8;
-    --disc-soft: rgba(157, 139, 216, 0.12);
-    --add-bg: rgba(87, 171, 90, 0.1);
-    --del-bg: rgba(236, 93, 93, 0.09);
-    --code-bg: #10161b;
+    --ground: #14171a;
+    --surface: #1a1e22;
+    --raise: #232a31;
+    --line: #333b44;
+    --line-soft: #262c33;
+    --text: #e8e4dd;
+    --dim: #9a9288;
+    --faint: #7f776d;
+    --accent: #6aa8e0;
+    --accent-soft: rgba(106, 168, 224, 0.11);
+    --sev-crit: #e0705f;
+    --sev-high: #d19a4e;
+    --sev-med: #9a9288;
+    --sev-low: #7f776d;
+    --diff-add: #6fb573;
+    --diff-del: #e0705f;
+    --add-bg: rgba(111, 181, 115, 0.1);
+    --del-bg: rgba(224, 112, 95, 0.09);
+    --code-bg: #12161a;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
   }
 }
 :root[data-theme="dark"] {
-  --ground: #0f1317;
-  --surface: #151a20;
-  --raise: #1b222a;
-  --line: #232c35;
-  --line-soft: #1d252d;
-  --text: #dee5ea;
-  --dim: #8a97a0;
-  --faint: #5d6b75;
-  --accent: #e8b04b;
-  --accent-soft: rgba(232, 176, 75, 0.09);
-  --sev-crit: #ec5d5d;
-  --sev-high: #e8964a;
-  --sev-med: #d7ba5a;
-  --sev-low: #7e93a8;
-  --fix: #57ab5a;
-  --fix-soft: rgba(87, 171, 90, 0.12);
-  --skip: #77828b;
-  --skip-soft: rgba(119, 130, 139, 0.14);
-  --disc: #9d8bd8;
-  --disc-soft: rgba(157, 139, 216, 0.12);
-  --defer: #6aa8e0;
-  --defer-soft: rgba(106, 168, 224, 0.13);
-  --add-bg: rgba(87, 171, 90, 0.1);
-  --del-bg: rgba(236, 93, 93, 0.09);
-  --code-bg: #10161b;
+  --ground: #14171a;
+  --surface: #1a1e22;
+  --raise: #232a31;
+  --line: #333b44;
+  --line-soft: #262c33;
+  --text: #e8e4dd;
+  --dim: #9a9288;
+  --faint: #7f776d;
+  --accent: #6aa8e0;
+  --accent-soft: rgba(106, 168, 224, 0.11);
+  --sev-crit: #e0705f;
+  --sev-high: #d19a4e;
+  --sev-med: #9a9288;
+  --sev-low: #7f776d;
+  --diff-add: #6fb573;
+  --diff-del: #e0705f;
+  --add-bg: rgba(111, 181, 115, 0.1);
+  --del-bg: rgba(224, 112, 95, 0.09);
+  --code-bg: #12161a;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 :root[data-theme="light"] {
-  --ground: #f5f6f7;
+  --ground: #f6f5f2;
   --surface: #ffffff;
-  --raise: #eff1f3;
-  --line: #dfe3e7;
-  --line-soft: #e9ecef;
-  --text: #1b2530;
-  --dim: #5b6873;
-  --faint: #8b97a1;
-  --accent: #a96f10;
-  --accent-soft: rgba(169, 111, 16, 0.1);
-  --sev-crit: #c93c41;
-  --sev-high: #bc6a1e;
-  --sev-med: #967d1e;
-  --sev-low: #5f7387;
-  --fix: #2e7d36;
-  --fix-soft: rgba(46, 125, 54, 0.11);
-  --skip: #6b7680;
-  --skip-soft: rgba(107, 118, 128, 0.13);
-  --disc: #6a55a8;
-  --disc-soft: rgba(106, 85, 168, 0.11);
-  --defer: #2a6fb5;
-  --defer-soft: rgba(42, 111, 181, 0.11);
-  --add-bg: rgba(46, 125, 54, 0.08);
-  --del-bg: rgba(201, 60, 65, 0.07);
-  --code-bg: #f0f2f4;
-  --shadow: 0 1px 2px rgba(15, 23, 30, 0.05), 0 4px 16px rgba(15, 23, 30, 0.05);
+  --raise: #f1eee8;
+  --line: #ddd6c9;
+  --line-soft: #ece8e0;
+  --text: #1c1a17;
+  --dim: #6b6255;
+  --faint: #7d7365;
+  --accent: #2a6fb5;
+  --accent-soft: rgba(42, 111, 181, 0.09);
+  --sev-crit: #a93226;
+  --sev-high: #9a5b1e;
+  --sev-med: #6b6255;
+  --sev-low: #8a8071;
+  --diff-add: #2f6b39;
+  --diff-del: #a93226;
+  --add-bg: rgba(47, 107, 57, 0.08);
+  --del-bg: rgba(169, 50, 38, 0.07);
+  --code-bg: #f4f2ed;
+  --shadow: 0 1px 2px rgba(28, 26, 23, 0.05), 0 4px 16px rgba(28, 26, 23, 0.05);
 }
 
 * {
@@ -146,9 +203,10 @@ body {
   font-size: var(--fs-md);
   line-height: 1.5;
   font-family: var(--sans);
-  /* Deliberately NOT setting -webkit-font-smoothing. It forces grayscale
-     antialiasing, which discards subpixel rendering and makes small semibold
-     text look soft on any 1x display — most screens that are not Apple's. */
+  /* Still NOT setting -webkit-font-smoothing: subpixel rendering is the
+     sharper choice on 1x displays. The old softness came from semibold
+     system-ui at 13-15px, and that is gone — Plex Sans carries the scan
+     layer at 500, so no stem lands between pixels. */
 }
 .mono {
   font-family: var(--mono);
@@ -163,12 +221,12 @@ button {
   height: 100vh;
   overflow: hidden;
 }
+/* The narrow-width override for .rail lives at the end of the rail section
+   below, not here: at equal specificity the later rule wins, so a `display:
+   none` written above `.rail { display: flex }` never takes effect. */
 @media (max-width: 860px) {
   .app {
     grid-template-columns: 1fr;
-  }
-  .rail {
-    display: none;
   }
 }
 
@@ -250,11 +308,11 @@ button {
   background: var(--accent);
 }
 .stream-item.done .stream-dot {
-  background: var(--fix);
+  background: var(--text);
 }
 .stream-title {
   font-size: var(--fs-base);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.35;
 }
 .stream-meta {
@@ -278,6 +336,12 @@ button {
 .rail-foot .off {
   color: var(--sev-high);
 }
+/* Must come after `.rail { display: flex }` above to win the cascade. */
+@media (max-width: 860px) {
+  .rail {
+    display: none;
+  }
+}
 
 /* ---------------- main ---------------- */
 .main {
@@ -299,13 +363,39 @@ button {
   display: flex;
   align-items: center;
   gap: 14px;
-  flex-wrap: wrap;
+  /* Deliberately nowrap. When this wrapped, the tally stayed on the first line
+     and Submit dropped onto a second one by itself, which reads as a mistake
+     rather than a layout. The title is the only thing here that can lose
+     characters without losing meaning — the rail carries it in full — so it is
+     what yields. */
+  flex-wrap: nowrap;
   background: var(--ground);
 }
 .card-title {
   font-size: var(--fs-lg);
   font-weight: 600;
   letter-spacing: -0.01em;
+  min-width: 3ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-head .chip,
+.card-head .tally,
+.card-head .mark-rest,
+.card-head .submit-btn {
+  flex-shrink: 0;
+}
+/* Past the width where the rail drops out there is nothing left to take from
+   the title, so let the row wrap again rather than crush the controls. */
+@media (max-width: 860px) {
+  .card-head {
+    flex-wrap: wrap;
+  }
+  .card-title {
+    white-space: normal;
+    overflow: visible;
+  }
 }
 .chip {
   display: inline-flex;
@@ -337,24 +427,19 @@ button {
   font-family: var(--mono);
 }
 .t-und {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: none;
+  color: var(--dim);
 }
 .t-fix {
-  background: var(--fix-soft);
-  color: var(--fix);
+  background: var(--text);
+  color: var(--surface);
 }
-.t-skip {
-  background: var(--skip-soft);
-  color: var(--skip);
-}
-.t-disc {
-  background: var(--disc-soft);
-  color: var(--disc);
-}
+.t-skip,
+.t-disc,
 .t-defer {
-  background: var(--defer-soft);
-  color: var(--defer);
+  background: none;
+  color: var(--dim);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 .submit-btn {
   font-size: var(--fs-base);
@@ -370,9 +455,9 @@ button {
   transition: all 0.15s ease;
 }
 .submit-btn.ready {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #14181d;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--surface);
   cursor: pointer;
 }
 .submit-btn.ready:hover {
@@ -403,9 +488,10 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 20px 2px 8px;
+  padding: 20px 2px 9px;
+  font-family: var(--mono);
   font-size: var(--fs-micro);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -416,8 +502,8 @@ button {
 }
 .group-head .cnt {
   color: var(--faint);
-  font-weight: 600;
-  letter-spacing: 0;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 .g-crit {
   color: var(--sev-crit);
@@ -442,8 +528,8 @@ button {
   position: relative;
   background: var(--surface);
   border: 1px solid var(--line-soft);
-  border-radius: 8px;
-  margin-bottom: 6px;
+  border-radius: 10px;
+  margin-bottom: 8px;
   transition: border-color 0.12s ease;
   scroll-margin: 70px;
 }
@@ -466,7 +552,7 @@ button {
   grid-template-columns: 1fr auto;
   gap: 8px 16px;
   align-items: center;
-  padding: 11px 14px 11px 18px;
+  padding: 16px 16px 16px 20px;
   cursor: pointer;
 }
 .row-summary {
@@ -477,8 +563,8 @@ button {
 }
 .row-summary .txt {
   font-size: var(--fs-md);
-  /* 500, not 600: at 15px the size already marks this as the scan layer, and
-     the lighter weight keeps a wall of summaries from reading as a shout. */
+  /* 500, not 600: at 16.5px the size already marks this as the scan layer, and
+     Plex Sans keeps 500 crisp where system-ui semibold smeared. */
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -510,38 +596,45 @@ button {
 }
 .verdict {
   font-size: var(--fs-micro);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--faint);
   font-family: var(--mono);
 }
 .state {
-  min-width: 64px;
+  min-width: 58px;
   text-align: center;
   font-size: var(--fs-micro);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 4px 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
   border-radius: 99px;
   font-family: var(--mono);
   color: var(--faint);
-  background: var(--raise);
+  background: none;
+  border: 1px solid transparent;
 }
+/* Decisions carry no hue — fill, outline and dash do the telling apart, so a
+   column of them scans as one shape language instead of a traffic light. */
 .state.s-fix {
-  color: var(--fix);
-  background: var(--fix-soft);
+  color: var(--surface);
+  background: var(--text);
+  border-color: var(--text);
 }
 .state.s-skip {
-  color: var(--skip);
-  background: var(--skip-soft);
+  color: var(--dim);
+  border-color: var(--line);
 }
 .state.s-discuss {
-  color: var(--disc);
-  background: var(--disc-soft);
+  color: var(--text);
+  border-color: var(--text);
 }
 .state.s-defer {
-  color: var(--defer);
-  background: var(--defer-soft);
+  color: var(--dim);
+  border-style: dashed;
+  border-color: var(--line);
 }
 
 .row-detail {
@@ -549,15 +642,18 @@ button {
   padding: 14px 18px 16px;
 }
 .row-detail p {
-  margin: 0 0 10px;
-  max-width: 68ch;
-  color: var(--text);
+  margin: 0 0 12px;
+  max-width: 64ch;
+  color: var(--dim);
   font-size: var(--fs-base);
+  line-height: 1.7;
   white-space: pre-wrap;
+  text-wrap: pretty;
 }
 .d-label {
+  font-family: var(--mono);
   font-size: var(--fs-micro);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--faint);
@@ -569,8 +665,10 @@ button {
 .scenario {
   color: var(--dim);
   font-size: var(--fs-base);
-  max-width: 68ch;
+  line-height: 1.7;
+  max-width: 64ch;
   margin: 0;
+  text-wrap: pretty;
 }
 .diff {
   background: var(--code-bg);
@@ -589,11 +687,11 @@ button {
 }
 .diff .add {
   background: var(--add-bg);
-  color: var(--fix);
+  color: var(--diff-add);
 }
 .diff .del {
   background: var(--del-bg);
-  color: var(--sev-crit);
+  color: var(--diff-del);
 }
 .diff .ctx {
   color: var(--dim);
@@ -643,29 +741,31 @@ button {
   border: 1px solid var(--line);
   color: var(--dim);
 }
-.act-fix:hover,
+.act:hover {
+  border-color: var(--dim);
+}
 .act-fix.on {
-  background: var(--fix-soft);
-  border-color: var(--fix);
-  color: var(--fix);
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--surface);
 }
-.act-skip:hover,
+.act-fix.on kbd {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: transparent;
+  color: var(--surface);
+}
 .act-skip.on {
-  background: var(--skip-soft);
-  border-color: var(--skip);
-  color: var(--skip);
+  border-color: var(--line);
+  color: var(--dim);
 }
-.act-discuss:hover,
 .act-discuss.on {
-  background: var(--disc-soft);
-  border-color: var(--disc);
-  color: var(--disc);
+  border-color: var(--text);
+  color: var(--text);
 }
-.act-defer:hover,
 .act-defer.on {
-  background: var(--defer-soft);
-  border-color: var(--defer);
-  color: var(--defer);
+  border-style: dashed;
+  border-color: var(--dim);
+  color: var(--text);
 }
 /* Comments are usually a sentence or three, not a phrase — give them room. */
 .comment-row {
@@ -758,8 +858,9 @@ button {
 }
 .global-note label {
   display: block;
+  font-family: var(--mono);
   font-size: var(--fs-micro);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--faint);
@@ -797,15 +898,15 @@ button {
 }
 .returned {
   margin: 18px 0 6px;
-  border: 1px solid var(--fix);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--fix-soft);
+  background: var(--raise);
   padding: 14px 18px;
 }
 .returned .r-title {
   font-weight: 600;
   font-size: var(--fs-base);
-  color: var(--fix);
+  color: var(--text);
   display: flex;
   gap: 8px;
   align-items: center;
@@ -929,6 +1030,9 @@ button {
   border: 1px solid var(--line-soft);
   padding: 6px 10px;
   text-align: left;
+  /* Comparison tables run to uneven cell lengths; centred cells read as
+     misaligned against the row above them. */
+  vertical-align: top;
 }
 .md th {
   background: var(--raise);

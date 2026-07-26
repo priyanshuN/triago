@@ -264,6 +264,8 @@ your machine:
   anything executable before it reaches the DOM;
 - config values are never run through a shell — argv arrays only;
 - editor deep-links and tmux injection are off until you turn them on;
+- the interface serves its own fonts. A webfont fetched from a CDN would tell a
+  third party each time you opened a review, and the CSP above blocks it anyway;
 - no telemetry, no network calls, no analytics. There is no phone-home to
   disable.
 
@@ -333,3 +335,6 @@ would not have caught.
 Next: questions and draft cards, and packaging as a Claude Code plugin.
 
 [MIT](LICENSE) © priyanshuN
+
+Set in [IBM Plex](https://github.com/IBM/plex), bundled with the interface under
+the [SIL Open Font License](web/public/IBM-Plex-OFL.txt).

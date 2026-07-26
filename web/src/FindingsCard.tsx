@@ -342,7 +342,9 @@ export function FindingsCard({
   return (
     <div className={`card${locked ? " locked" : ""}`}>
       <header className="card-head">
-        <span className="card-title">{card.title}</span>
+        <span className="card-title" title={card.title}>
+          {card.title}
+        </span>
         {card.source && <span className="chip">{card.source}</span>}
         <span className="chip">{card.findings.length} findings</span>
         <span className="spacer" />
