@@ -127,11 +127,19 @@ and no timeout is treated as a failure — `exit 3` means "you were busy."
 ### Frontend: tokens, not a framework
 
 React plus hand-written CSS with a custom-property token system, including a
-**six-step type scale** (`--fs-micro` 11 / `--fs-sm` 12 / `--fs-base` 13 /
-`--fs-md` 14 / `--fs-lg` 16 / `--fs-xl` 20). Every `font-size` in the stylesheet
+**six-step type scale** (`--fs-micro` 12 / `--fs-sm` 13 / `--fs-base` 14 /
+`--fs-md` 15 / `--fs-lg` 18 / `--fs-xl` 22), every step multiplied by a single
+`--ui-scale` knob so the whole interface can grow or shrink without touching a
+component. Every `font-size` in the stylesheet
 resolves to one of those steps; there are no literal pixel sizes left. Font
 stacks lead with `system-ui`, so the UI wears the platform's own face rather than
-falling through to a metric clone. No Tailwind, no
+falling through to a metric clone.
+
+Weight is rationed on purpose: `700` is reserved for the wordmark alone, `600`
+marks the layer you scan (row summaries, titles, group headers, the decision
+buttons) and everything else sits at `400`–`500`. When six different things are
+bold, none of them is emphasis — hierarchy has to come from size, colour and
+letter-spacing, with weight as the last resort rather than the first. No Tailwind, no
 component library — deliberately. The UI is one dense keyboard-driven inbox whose
 visual language was designed as a token set first; utility classes and a
 primitives library would have added dependencies without covering a single

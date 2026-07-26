@@ -31,14 +31,16 @@
   --del-bg: rgba(201, 60, 65, 0.07);
   --code-bg: #f0f2f4;
   --shadow: 0 1px 2px rgba(15, 23, 30, 0.05), 0 4px 16px rgba(15, 23, 30, 0.05);
-  /* Type scale: six steps. Every font-size in this file resolves to one of
-     these, so the UI stays a system rather than per-element tuning. */
-  --fs-micro: 11px; /* uppercase labels, kbd, rail meta */
-  --fs-sm: 12px;    /* chips, tally, verdict, diff, captions */
-  --fs-base: 13px;  /* detail prose, comments, buttons */
-  --fs-md: 14px;    /* row summaries, doc body, base */
-  --fs-lg: 16px;    /* card + brand titles */
-  --fs-xl: 20px;    /* doc h1 */
+  /* Type scale: six steps, all driven by one multiplier. Every font-size in
+     this file resolves to a step, so the UI stays a system — and --ui-scale
+     lets the whole thing grow or shrink without touching any component. */
+  --ui-scale: 1;
+  --fs-micro: calc(12px * var(--ui-scale)); /* uppercase labels, kbd, rail meta */
+  --fs-sm: calc(13px * var(--ui-scale));    /* chips, tally, verdict, diff */
+  --fs-base: calc(14px * var(--ui-scale));  /* detail prose, comments, buttons */
+  --fs-md: calc(15px * var(--ui-scale));    /* row summaries, doc body */
+  --fs-lg: calc(18px * var(--ui-scale));    /* card + brand titles */
+  --fs-xl: calc(22px * var(--ui-scale));    /* doc h1 */
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code",
     "Ubuntu Sans Mono", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto,
@@ -202,7 +204,7 @@ button {
 .rail-label {
   padding: 10px 18px 6px;
   font-size: var(--fs-micro);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--faint);
@@ -302,7 +304,7 @@ button {
 }
 .card-title {
   font-size: var(--fs-lg);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 .chip {
@@ -310,7 +312,7 @@ button {
   align-items: center;
   gap: 6px;
   font-size: var(--fs-micro);
-  font-weight: 600;
+  font-weight: 500;
   padding: 3px 9px;
   border-radius: 99px;
   background: var(--raise);
@@ -329,7 +331,7 @@ button {
 }
 .tally .t {
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: 500;
   padding: 3px 9px;
   border-radius: 99px;
   font-family: var(--mono);
@@ -403,7 +405,7 @@ button {
   gap: 10px;
   padding: 20px 2px 8px;
   font-size: var(--fs-micro);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -506,7 +508,7 @@ button {
 }
 .verdict {
   font-size: var(--fs-micro);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--faint);
   font-family: var(--mono);
@@ -515,7 +517,7 @@ button {
   min-width: 64px;
   text-align: center;
   font-size: var(--fs-micro);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   padding: 4px 10px;
   border-radius: 99px;
@@ -553,7 +555,7 @@ button {
 }
 .d-label {
   font-size: var(--fs-micro);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--faint);
@@ -755,7 +757,7 @@ button {
 .global-note label {
   display: block;
   font-size: var(--fs-micro);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--faint);
@@ -799,7 +801,7 @@ button {
   padding: 14px 18px;
 }
 .returned .r-title {
-  font-weight: 700;
+  font-weight: 600;
   font-size: var(--fs-base);
   color: var(--fix);
   display: flex;
