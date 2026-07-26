@@ -48,7 +48,10 @@ jobs:
             exit 1
           fi
 
+      # Only gate the real thing: a rehearsal must be able to run while the
+      # package is still private, which is exactly when you would rehearse.
       - name: Refuse to publish while the package is marked private
+        if: github.event_name == 'release' || inputs.publish
         run: |
           node -e "if (require('./package.json').private) {
             console.error('package.json still has \"private\": true — remove it deliberately before releasing');
