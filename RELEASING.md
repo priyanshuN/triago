@@ -44,6 +44,25 @@ workflow, then confirm the install path a stranger will actually use:
 npx triago@latest demo
 ```
 
+## After the first release: drop the token
+
+npm supports **trusted publishing** — the workflow authenticates with a
+short-lived OIDC credential instead of a stored token, so there is nothing to
+rotate and nothing that can leak from repository secrets.
+
+The configuration lives on the package's own page, so it can only be set up once
+the package exists — hence the token for release one, then:
+
+1. npmjs.com → the package → **Settings** → **Trusted Publisher** → GitHub Actions.
+2. Fill in the organisation/user (`priyanshuN`), the repository (`triago`) and
+   the workflow filename (`publish.yml`).
+3. Delete the `NPM_TOKEN` repository secret and revoke the token on npmjs.com.
+
+The workflow already meets the requirements: it sets `id-token: write`, and Node
+24 ships npm 11.13, comfortably past the 11.5.1 minimum. Provenance becomes
+automatic under trusted publishing, so the `--provenance` flag is redundant from
+then on — harmless to leave, but it can go.
+
 ## Versioning
 
 Pre-1.0 while the card schema can still change. The schema is the public
