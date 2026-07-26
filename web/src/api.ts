@@ -69,9 +69,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  remove: (id: string, force = false) =>
+    req<{ deleted: boolean; card: string }>(`/api/cards/${id}${force ? "?force=1" : ""}`, {
+      method: "DELETE",
+    }),
 };
 
-export type ServerEvent = { type: "card.created" | "card.decided"; id: string };
+export type ServerEvent = { type: "card.created" | "card.decided" | "card.deleted"; id: string };
 
 /**
  * SSE over fetch rather than EventSource: EventSource cannot send an

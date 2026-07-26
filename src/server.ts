@@ -28,6 +28,7 @@ import {
 import {
   DecisionError,
   createCard,
+  deleteCard,
   listCards,
   lookupCard,
   readDecisions,
@@ -37,14 +38,30 @@ import { notify, openBrowser, openInEditor, tmuxInject } from "./side.js";
 
 const STARTED_AT = new Date().toISOString();
 
-type Event = { type: "card.created" | "card.decided"; id: string };
+type Event = { type: "card.created" | "card.decided" | "card.deleted"; id: string };
+
+/**
+ * How a parked long-poll ended. Deletion is its own outcome rather than a
+ * timeout: a caller that asked for nine minutes should be told the card is gone
+ * immediately, not left to discover it by waiting out the clock.
+ */
+type WaitOutcome =
+  | { kind: "decided"; record: DecisionsRecord }
+  | { kind: "deleted" }
+  | { kind: "timeout" };
 
 /** Long-polls parked on a card, and SSE clients watching the whole home. */
-const waiters = new Map<string, Set<(d: DecisionsRecord) => void>>();
+const waiters = new Map<string, Set<(outcome: WaitOutcome) => void>>();
 const streams = new Set<(e: Event) => void>();
 
 function wakeWaiters(id: string, record: DecisionsRecord): void {
-  for (const resolve of waiters.get(id) ?? []) resolve(record);
+  for (const resolve of waiters.get(id) ?? []) resolve({ kind: "decided", record });
+  waiters.delete(id);
+}
+
+/** Called when a card is deleted out from under anything waiting on it. */
+function killWaiters(id: string): void {
+  for (const resolve of waiters.get(id) ?? []) resolve({ kind: "deleted" });
   waiters.delete(id);
 }
 
@@ -52,21 +69,21 @@ function broadcast(event: Event): void {
   for (const push of streams) push(event);
 }
 
-function waitForDecisions(id: string, seconds: number): Promise<DecisionsRecord | null> {
+function waitForDecisions(id: string, seconds: number): Promise<WaitOutcome> {
   return new Promise((resolve) => {
     const existing = readDecisions(id);
-    if (existing) return resolve(existing);
+    if (existing) return resolve({ kind: "decided", record: existing });
     const set = waiters.get(id) ?? new Set();
     waiters.set(id, set);
     const timer = setTimeout(() => {
-      set.delete(onDecided);
-      resolve(null);
+      set.delete(onOutcome);
+      resolve({ kind: "timeout" });
     }, seconds * 1000);
-    function onDecided(record: DecisionsRecord): void {
+    function onOutcome(outcome: WaitOutcome): void {
       clearTimeout(timer);
-      resolve(record);
+      resolve(outcome);
     }
-    set.add(onDecided);
+    set.add(onOutcome);
   });
 }
 
@@ -221,9 +238,31 @@ export function buildApp(token: string, port: number): Hono {
       return decisions ? c.json(decisions) : c.json({ error: "not decided yet" }, 404);
     }
     const seconds = Math.min(Math.max(Number(waitParam) || 30, 1), 900);
-    const record = await waitForDecisions(card.id, seconds);
-    if (!record) return c.json({ error: "timeout", card: card.id }, 408);
-    return c.json(record);
+    const outcome = await waitForDecisions(card.id, seconds);
+    if (outcome.kind === "timeout") return c.json({ error: "timeout", card: card.id }, 408);
+    if (outcome.kind === "deleted") {
+      return c.json({ error: "card deleted while waiting", card: card.id }, 410);
+    }
+    return c.json(outcome.record);
+  });
+
+  app.delete("/api/cards/:id", (c) => {
+    const found = lookupCard(c.req.param("id"));
+    if (!found.ok) return c.json({ error: found.error }, found.status);
+    const card = found.card;
+    // An open card may have an agent parked on it. Deleting that silently is
+    // how you end up with a command that never returns, so it takes a
+    // deliberate force and the waiters get told.
+    if (card.status !== "decided" && c.req.query("force") !== "1") {
+      return c.json(
+        { error: "card is still open — pass force to delete it anyway", card: card.id },
+        409,
+      );
+    }
+    killWaiters(card.id);
+    const removed = deleteCard(card.id);
+    broadcast({ type: "card.deleted", id: card.id });
+    return c.json({ deleted: removed, card: card.id });
   });
 
   app.post("/api/cards/:id/decisions", async (c) => {

@@ -72,6 +72,27 @@ export default function App() {
     [loadCards, onAuthError, toast],
   );
 
+  const deleteCard = useCallback(
+    async (card: CardSummary) => {
+      try {
+        // The rail already asked, and said so when the card was still open, so
+        // reaching here on an open card is a deliberate answer to that question.
+        await api.remove(card.id, card.status === "open");
+        if (card.id === currentIdRef.current) {
+          setDetail(null);
+          setCurrentId(null);
+          history.replaceState(null, "", "/");
+        }
+        await loadCards();
+        toast(`deleted ${card.id}`);
+      } catch (err) {
+        if (onAuthError(err)) return;
+        toast(err instanceof Error ? err.message : "could not delete card");
+      }
+    },
+    [loadCards, onAuthError, toast],
+  );
+
   useEffect(() => {
     if (!hasToken) return;
     void loadCards();
@@ -127,7 +148,13 @@ export default function App() {
 
   return (
     <div className="app">
-      <Rail cards={cards} currentId={currentId} connected={connected} onPick={navigate} />
+      <Rail
+        cards={cards}
+        currentId={currentId}
+        connected={connected}
+        onPick={navigate}
+        onDelete={deleteCard}
+      />
       <main className="main">
         {!connected && <div className="banner">triago server unreachable — reconnecting…</div>}
         {!detail && (

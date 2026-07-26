@@ -17,6 +17,8 @@ const USAGE = `triago — decision surface for CLI agents
   triago show <id>                print a card and its decisions
   triago ls                       list cards
   triago open [id]                open the browser surface (hands over the token)
+  triago rm <id…>                 delete cards (--force for ones still open)
+  triago prune                    bulk delete; prints the list, --yes to do it
   triago status                   is the server up, and where
   triago stop                     shut the server down
   triago token                    print the API token
@@ -27,6 +29,10 @@ Common flags
   --source <s>      what produced it      --wait [secs]  block and print decisions JSON
   --group-by <g>    severity|repo|none    --json         machine-readable output
   --timeout <secs>  wait budget (540)     --ack-label <t> doc card button label
+
+Prune flags
+  --older-than <days>  only cards created before then    --include-open  open ones too
+  --session <k>        only that session                 --yes           actually delete
 
 Payloads accept either {title?, findings:[...]} or a bare array of findings.
 State lives in ${TRIAGO_HOME}. Nothing leaves the machine.`;
@@ -322,6 +328,63 @@ async function cmdStatus(args: Args): Promise<void> {
   );
 }
 
+async function cmdRm(args: Args): Promise<void> {
+  const ids = args._.slice(1);
+  if (!ids.length) fail("usage: triago rm <id…> [--force]", 2);
+  const client = await ensureServer();
+  const force = Boolean(args.flags.force);
+  let removed = 0;
+  for (const id of ids) {
+    try {
+      const result = await client.remove(id, force);
+      removed += result.deleted ? 1 : 0;
+      process.stdout.write(`removed ${result.card}\n`);
+    } catch (err) {
+      // Keep going: deleting four ids should not stop dead on the second.
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`triago: ${id}: ${message}\n`);
+    }
+  }
+  if (!removed) process.exitCode = 1;
+}
+
+/**
+ * Bulk cleanup. Dry by default — it prints what it would remove and takes --yes
+ * to actually do it, because there is no undo and the alternative is learning
+ * the flags by destroying something.
+ */
+async function cmdPrune(args: Args): Promise<void> {
+  const client = await ensureServer();
+  const { cards } = await client.listCards(str(args.flags.session));
+  const includeOpen = Boolean(args.flags["include-open"]);
+  const olderThan = Number(str(args.flags["older-than"]) ?? "");
+  const cutoff = Number.isFinite(olderThan) && olderThan > 0 ? Date.now() - olderThan * 86400_000 : null;
+
+  const doomed = cards.filter((c) => {
+    if (c.status !== "decided" && !includeOpen) return false;
+    if (cutoff !== null && Date.parse(c.created_at) > cutoff) return false;
+    return true;
+  });
+
+  if (!doomed.length) {
+    process.stdout.write("nothing to prune\n");
+    return;
+  }
+  if (!args.flags.yes) {
+    process.stdout.write(`would remove ${doomed.length} card(s):\n`);
+    for (const c of doomed) {
+      process.stdout.write(`  ${c.id}  ${c.status.padEnd(8)} ${c.title}\n`);
+    }
+    process.stdout.write("\nre-run with --yes to remove them\n");
+    return;
+  }
+  for (const c of doomed) {
+    await client.remove(c.id, true);
+    process.stdout.write(`removed ${c.id}\n`);
+  }
+  process.stdout.write(`\npruned ${doomed.length} card(s)\n`);
+}
+
 async function cmdStop(): Promise<void> {
   const health = await probe(DEFAULT_PORT);
   if (!health) {
@@ -353,6 +416,10 @@ async function main(): Promise<void> {
       return cmdLs(args);
     case "open":
       return cmdOpen(args);
+    case "rm":
+      return cmdRm(args);
+    case "prune":
+      return cmdPrune(args);
     case "status":
       return cmdStatus(args);
     case "stop":

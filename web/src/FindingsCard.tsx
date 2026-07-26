@@ -481,31 +481,44 @@ export function FindingsCard({
                           <FixBlock text={finding.suggested_fix} />
                         </>
                       )}
-                      <div className="act-bar">
-                        {DECISION_ORDER.map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            className={`act act-${d}${decision === d ? " on" : ""}`}
-                            disabled={locked}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              decide(finding.id, d);
-                            }}
-                          >
-                            {d[0]!.toUpperCase() + d.slice(1)}
-                            <kbd>{DECISION_KEYS[d]}</kbd>
-                          </button>
-                        ))}
-                      </div>
-                      {!(locked && !state?.comment) && (
+                      {/* A submitted card is a record, not a control. The four
+                          buttons were already inert once locked, but they still
+                          looked live — and the decision is stated by the pill on
+                          the row anyway, so the bar simply goes. */}
+                      {!locked && (
+                        <div className="act-bar">
+                          {DECISION_ORDER.map((d) => (
+                            <button
+                              key={d}
+                              type="button"
+                              className={`act act-${d}${decision === d ? " on" : ""}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                decide(finding.id, d);
+                              }}
+                            >
+                              {d[0]!.toUpperCase() + d.slice(1)}
+                              <kbd>{DECISION_KEYS[d]}</kbd>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {/* Locked: show the note you left as prose, not as a
+                          greyed-out input you might try to click into. */}
+                      {locked
+                        ? state?.comment && (
+                            <>
+                              <div className="d-label">Your note</div>
+                              <p className="left-note">{state.comment}</p>
+                            </>
+                          )
+                        : (
                         <div className="comment-row">
                           <textarea
                             className="comment"
                             rows={3}
                             placeholder="note to the agent — what to do instead, why this is a skip, which ticket it belongs to…"
                             value={state?.comment ?? ""}
-                            disabled={locked}
                             ref={(el) => {
                               commentRefs.current[finding.id] = el;
                             }}
@@ -582,6 +595,19 @@ export function FindingsCard({
             <span className="k">
               <kbd>ctrl ⏎</kbd> submit
             </span>
+          </>
+        ) : locked ? (
+          // Submitted: the decision keys are dead, so stop advertising them.
+          // Reading is all that is left, and that is what the bar now offers.
+          <>
+            <span className="k">
+              <kbd>j</kbd>
+              <kbd>k</kbd> navigate
+            </span>
+            <span className="k">
+              <kbd>⏎</kbd> expand
+            </span>
+            <span className="k">submitted — decisions are final</span>
           </>
         ) : (
           <>

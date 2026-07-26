@@ -200,6 +200,49 @@ test("a parked long-poll wakes up as soon as decisions land", async () => {
   assert.ok(elapsed < 5000, `woke in ${elapsed}ms, expected well under 5s`);
 });
 
+test("deleting an open card needs force, and a decided one does not", async () => {
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+  ).json();
+
+  const refused = await fetch(`${BASE}/api/cards/${posted.id}`, {
+    method: "DELETE",
+    headers: auth(),
+  });
+  assert.equal(refused.status, 409, "an open card must not vanish without force");
+  assert.equal((await fetch(`${BASE}/api/cards/${posted.id}`, { headers: auth() })).status, 200);
+
+  await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
+    method: "POST",
+    headers: auth(),
+    body: JSON.stringify({
+      items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "skip" }],
+    }),
+  });
+
+  const gone = await fetch(`${BASE}/api/cards/${posted.id}`, { method: "DELETE", headers: auth() });
+  assert.equal(gone.status, 200);
+  assert.equal((await gone.json()).deleted, true);
+  assert.equal((await fetch(`${BASE}/api/cards/${posted.id}`, { headers: auth() })).status, 404);
+});
+
+test("deleting a card out from under a parked wait wakes it with 410, not a timeout", async () => {
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+  ).json();
+
+  const started = Date.now();
+  const parked = fetch(`${BASE}/api/cards/${posted.id}/decisions?wait=30`, { headers: auth() });
+  await sleep(200);
+  await fetch(`${BASE}/api/cards/${posted.id}?force=1`, { method: "DELETE", headers: auth() });
+
+  const response = await parked;
+  const elapsed = Date.now() - started;
+  assert.equal(response.status, 410, "a deleted card is gone, not slow");
+  assert.match((await response.json()).error, /deleted/);
+  assert.ok(elapsed < 5000, `woke in ${elapsed}ms — it must not wait out the 30s budget`);
+});
+
 test("`triago wait` blocks, prints the decisions JSON and exits 0", async () => {
   const posted = await (
     await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })

@@ -145,6 +145,19 @@ export class DecisionError extends Error {
   }
 }
 
+/**
+ * Removes a card and its decisions from disk. Returns false if it was already
+ * gone, so deleting twice is not an error. Callers must wake anything parked on
+ * the card first, or a blocked `--wait` sits there until its own timeout with
+ * no idea the card no longer exists — see killWaiters in server.ts.
+ */
+export function deleteCard(id: string): boolean {
+  const dir = cardDir(id);
+  if (!fs.existsSync(dir)) return false;
+  fs.rmSync(dir, { recursive: true, force: true });
+  return true;
+}
+
 export function submitDecisions(card: StoredCard, input: DecisionsInput): DecisionsRecord {
   if (card.status === "decided") throw new DecisionError("card already decided", 409);
 

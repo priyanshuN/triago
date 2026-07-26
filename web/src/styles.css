@@ -275,15 +275,23 @@ button {
   flex-direction: column;
   gap: 2px;
 }
+/* The item is a container, not the button: the delete control has to sit
+   beside the pick target rather than inside it. */
 .stream-item {
+  position: relative;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.stream-pick {
   display: grid;
   grid-template-columns: 8px 1fr;
   gap: 10px;
   align-items: start;
+  width: 100%;
   padding: 9px 10px;
   border-radius: 6px;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: none;
   text-align: left;
   background: none;
   color: inherit;
@@ -291,6 +299,80 @@ button {
 }
 .stream-item:hover {
   background: var(--raise);
+}
+/* Destructive, so it stays out of the way until the row is under the cursor —
+   but never keyboard-unreachable. */
+.stream-x {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  border-radius: 5px;
+  border: none;
+  background: none;
+  color: var(--faint);
+  font-size: var(--fs-md);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.stream-item:hover .stream-x,
+.stream-x:focus-visible {
+  opacity: 1;
+}
+.stream-x:hover {
+  background: var(--del-bg);
+  color: var(--sev-crit);
+}
+.stream-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 10px 9px 28px;
+  font-size: var(--fs-micro);
+  color: var(--sev-crit);
+}
+/* Rail is 236px wide, so the prompt takes its own line and keeps yes/no
+   together underneath rather than orphaning one of them. */
+.stream-confirm > span {
+  flex-basis: 100%;
+}
+.stream-confirm button {
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--dim);
+  cursor: pointer;
+}
+.stream-confirm button.yes {
+  border-color: var(--sev-crit);
+  color: var(--sev-crit);
+}
+.stream-more {
+  align-self: flex-start;
+  margin: 4px 0 8px 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.stream-more:hover {
+  color: var(--text);
 }
 .stream-item.active {
   background: var(--surface);
@@ -415,9 +497,11 @@ button {
 .card-head .submit-btn {
   flex-shrink: 0;
 }
-/* Past the width where the rail drops out there is nothing left to take from
-   the title, so let the row wrap again rather than crush the controls. */
-@media (max-width: 860px) {
+/* The single row only works while there is genuinely room for it. The tally and
+   Submit want ~840px on their own, so below this the title was being ground
+   down to an initial and an ellipsis — worse than the wrap it replaced. Here
+   the row wraps instead, and the title survives whole. */
+@media (max-width: 1200px) {
   .card-head {
     flex-wrap: wrap;
   }
@@ -807,6 +891,19 @@ button {
   border-color: var(--dim);
   color: var(--text);
 }
+/* A note you already submitted reads as prose, not as an input you might try
+   to click into. */
+.left-note {
+  margin: 0;
+  max-width: 64ch;
+  padding-left: 12px;
+  border-left: 2px solid var(--line);
+  color: var(--text);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 /* Comments are usually a sentence or three, not a phrase — give them room. */
 .comment-row {
   margin-top: 12px;

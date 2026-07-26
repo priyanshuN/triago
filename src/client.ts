@@ -124,6 +124,11 @@ export class TriagoClient {
     return result.__timeout ? null : result;
   }
 
+  /** Deleting an open card needs force — something may still be parked on it. */
+  remove(id: string, force = false): Promise<{ deleted: boolean; card: string }> {
+    return this.call("DELETE", `/api/cards/${encodeURIComponent(id)}${force ? "?force=1" : ""}`);
+  }
+
   stop(): Promise<unknown> {
     return this.call("POST", "/api/shutdown");
   }
