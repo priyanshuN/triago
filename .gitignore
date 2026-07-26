@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# Personal design + build log: internal ticket ids, workflow and overlay details.
+# The public-facing distillation belongs in README.md / a scrubbed DESIGN.md.
+SPEC.md

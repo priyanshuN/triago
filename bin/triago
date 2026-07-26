@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Launcher for a local triago checkout.
+#
+# It pins the newest installed Node rather than using `env node`, because
+# project-local pins (Volta, nvm .nvmrc) can put an older Node on PATH in some
+# repos, and the triago daemon should not depend on which directory you posted a
+# card from. Override with TRIAGO_NODE=/path/to/node.
+set -euo pipefail
+
+# Resolve through symlinks (this script is usually linked into ~/.local/bin).
+self="${BASH_SOURCE[0]}"
+while [ -L "$self" ]; do
+  target="$(readlink "$self")"
+  case "$target" in
+    /*) self="$target" ;;
+    *) self="$(dirname -- "$self")/$target" ;;
+  esac
+done
+here="$(cd -- "$(dirname -- "$self")/.." && pwd)"
+
+node_bin="${TRIAGO_NODE:-}"
+if [ -z "$node_bin" ]; then
+  newest="$(ls -d "$HOME"/.nvm/versions/node/v* 2>/dev/null | sort -V | tail -1 || true)"
+  if [ -n "$newest" ] && [ -x "$newest/bin/node" ]; then
+    node_bin="$newest/bin/node"
+  else
+    node_bin="$(command -v node || true)"
+  fi
+fi
+[ -n "$node_bin" ] || { echo "triago: no node found (set TRIAGO_NODE)" >&2; exit 1; }
+
+if [ ! -f "$here/dist/cli.js" ]; then
+  echo "triago: not built — run 'npm install && npm run build' in $here" >&2
+  exit 1
+fi
+exec "$node_bin" "$here/dist/cli.js" "$@"

@@ -1,0 +1,67 @@
+{
+  "name": "triago",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Human-in-the-loop decision surface for CLI coding agents: the agent posts a card of findings, you triage them in a browser with the keyboard, and your decisions come back as structured data. Local-only, MCP-native.",
+  "keywords": [
+    "mcp",
+    "human-in-the-loop",
+    "hitl",
+    "agent",
+    "claude-code",
+    "codex",
+    "code-review",
+    "triage",
+    "cli",
+    "developer-tools"
+  ],
+  "license": "MIT",
+  "author": "priyanshuN <31548996+priyanshuN@users.noreply.github.com>",
+  "homepage": "https://github.com/priyanshuN/triago#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/priyanshuN/triago.git"
+  },
+  "bugs": {
+    "url": "https://github.com/priyanshuN/triago/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "triago": "dist/cli.js",
+    "triago-mcp": "dist/mcp.js"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run build:server && npm run build:web",
+    "build:server": "tsc -p tsconfig.json",
+    "build:web": "vite build",
+    "dev:web": "vite",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
+    "test": "TRIAGO_NO_BROWSER=1 node --test test/*.test.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "hono": "^4.6.14",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "marked": "^15.0.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}

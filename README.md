@@ -1,0 +1,303 @@
+# triago
+
+**A local decision surface for CLI coding agents.** The agent posts a card, you
+triage it in a browser, and your decisions come back to the agent as structured
+data. Nothing leaves your machine.
+
+Terminals are good at streaming work and bad at two things agents do constantly:
+showing you twelve findings with hierarchy, and letting you respond to each one.
+Today that response has to be typed as prose referring to item numbers — so in
+practice you accept the batch or skim it, exactly where per-item judgment matters
+most. triago turns that into an inbox: `j`/`k` to move, `f`/`s`/`d`/`t` to decide,
+`ctrl ⏎` to submit, and the agent picks up a decision per item.
+
+triago is not a client. It shows no transcript, runs no model, and never touches
+your repo — it renders what an agent hands it and returns what you decided.
+
+## Quickstart
+
+From a checkout:
+
+```bash
+npm install && npm run build && ln -s "$PWD/bin/triago" ~/.local/bin/triago
+```
+
+Then, from anywhere:
+
+```bash
+triago demo
+```
+
+That posts a sample card so you can see the thing before writing a payload. For
+real use:
+
+```bash
+triago findings review.json --wait
+```
+
+The first command starts the server on demand (no service to install), opens a
+tab, and blocks until you submit. `review.json` is either `{"title": "...",
+"findings": [...]}` or a bare array; only `summary` is required per finding:
+
+```json
+[
+  {
+    "severity": "high",
+    "verdict": "CONFIRMED",
+    "summary": "Retry loop re-sends the whole payload on partial failure",
+    "file": "src/dispatcher.ts",
+    "line": 197,
+    "body": "Why this is wrong…",
+    "failure_scenario": "40-problem batch, 1 fails → all 40 re-sent → payload rejected.",
+    "suggested_fix": "- if (batch.failed) retry(batch)\n+ if (batch.failed) retry(batch.failedItems)"
+  }
+]
+```
+
+When you hit submit, the blocked command prints this and exits 0:
+
+```json
+{
+  "card": "8712dddd",
+  "tally": { "fix": 6, "skip": 1, "discuss": 2, "defer": 1 },
+  "global_comment": "Fix the marked ones now, re-run the suite after.",
+  "items": [
+    { "id": "f1", "decision": "fix", "summary": "…", "file": "src/client.ts", "line": 148 },
+    { "id": "f5", "decision": "discuss", "comment": "not for this release", "summary": "…" }
+  ]
+}
+```
+
+## Cards
+
+**findings** — the anchor. Grouped by severity or repo, one keystroke per item,
+per-item comments, a note for the whole review. Submit locks the card and shows
+the exact payload the agent received.
+
+**doc** — markdown to read comfortably (a design write-up, an impact analysis),
+with a comment box and one Acknowledge button. `triago doc design.md --wait`.
+
+## Keyboard
+
+| | |
+|---|---|
+| `j` `k` / arrows | move between findings |
+| `⏎` or `o` | expand detail, scenario, suggested fix |
+| `f` `s` `d` `t` | fix / skip / discuss / defer — press again to clear |
+| `u` | undo this decision |
+| `c` | comment on this finding |
+| `ctrl ⏎` | submit |
+
+Inside a comment box the global keys would just type themselves, so the box has
+its own exits:
+
+| | |
+|---|---|
+| `esc` | back to the list, staying on this finding |
+| `tab` / `shift tab` | on to the next / previous finding |
+| `alt j` / `alt k` | same, for fingers already trained on `j`/`k` |
+| `ctrl ⏎` | submit the whole card, from anywhere |
+
+## The four decisions
+
+| | |
+|---|---|
+| **fix** | act on it now |
+| **skip** | not a real problem, or not worth doing at all |
+| **discuss** | needs a conversation before anything happens |
+| **defer** | real, but not now — file it as tracked follow-up work and move on |
+
+`defer` exists because `skip` plus a comment cannot tell an agent the difference
+between "this isn't a problem" and "this is a problem for later". What filing
+means is yours to define (an issue, a ticket comment, a line in a plan file); triago
+just makes the distinction explicit in the returned payload.
+
+After every decision, focus jumps to the next *undecided* finding, so a twelve
+item review is twelve keystrokes. Submit stays disabled until nothing is
+undecided; `rest → skip` handles the tail when you have made the calls that
+matter.
+
+## CLI
+
+```
+triago findings <file.json|->   post a findings card
+triago doc <file.md|->          post a markdown card
+triago wait <id>                block until submitted (exit 0 + JSON, exit 3 on timeout)
+triago show <id>                print a card and its decisions
+triago ls                       list cards
+triago open [id]                open the browser surface (hands the token over)
+triago status | triago stop        server state / shut it down
+```
+
+Flags: `--title`, `--source`, `--session`, `--group-by severity|repo|none`,
+`--wait [secs]`, `--timeout <secs>`, `--json`, `--ack-label`.
+
+**Four ways the answer gets back**, in the order you should reach for them:
+
+1. Decisions are always written to `~/.triago/cards/<id>/decisions.json`.
+2. `triago wait <id>` blocks and prints them (exit 3 if you take longer than the
+   budget, which is not an error — the card stays open).
+3. Walk away: the agent ends its turn, and any later `triago show <id>` picks the
+   decisions up.
+4. In tmux, triago can type a one-line notice into the pane the card was posted
+   from, which wakes an agent that already ended its turn (opt-in, below).
+
+An unanswered card is inert. Nothing hangs, nothing retries in the background.
+
+## Wiring it to your agent
+
+triago gives an agent a capability; your instruction file decides *when* it gets
+used. Do both — the second half is what stops long findings lists going back to
+the terminal out of habit.
+
+### Claude Code
+
+```bash
+claude mcp add --scope user triago -- triago-mcp     # every project, not just this one
+claude mcp list                                # triago: triago-mcp - ✔ Connected
+```
+
+Tool calls are capped at about 60 seconds by default, which is shorter than a
+real triage, so raise it once in `~/.claude/settings.json`:
+
+```json
+{ "env": { "MCP_TOOL_TIMEOUT": "600000" } }
+```
+
+### Codex
+
+```bash
+codex mcp add triago -- triago-mcp
+codex mcp get triago
+```
+
+Codex takes its timeouts per server in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.triago]
+command = "triago-mcp"
+startup_timeout_sec = 20
+tool_timeout_sec = 600
+```
+
+### Any other agent
+
+If it speaks MCP, point it at the `triago-mcp` binary (stdio). If it does not, it
+almost certainly runs shell commands, which is enough — `triago findings x.json
+--wait` prints the decisions to stdout and exits 0, and that works from aider,
+opencode, a Makefile, or a shell script with no integration at all.
+
+### Telling the agent when to use it
+
+Add a rule to whatever instruction file your agent reads (`CLAUDE.md`,
+`AGENTS.md`, a system prompt). Something like:
+
+> Findings lists longer than five items, or judgment documents over ~80 lines, go
+> to a triago card (`triago findings <file> --wait`, or `triago_post_findings`) instead of
+> being printed. Act on the returned decisions per item: **fix** now, **skip**
+> means drop it, **discuss** means stop and ask, **defer** means record it as
+> tracked follow-up work. Short output stays in the terminal.
+
+Be explicit about what each decision obliges the agent to do. Without that,
+`defer` quietly becomes `skip` and the card was pointless.
+
+## The MCP tools
+
+For agents that speak MCP this is the better interface: the post tool blocks and
+**returns the decisions as the tool result**, so there is no ladder at all.
+
+Tools: `triago_post_findings`, `triago_post_doc`, `triago_await_decisions`,
+`triago_list_cards`. Their JSON Schemas are generated from the same zod definitions
+the server validates against, so the agent and the browser can never disagree
+about what a card is.
+
+On a client timeout the post tool hands back the card id and a hint to call
+`triago_await_decisions`, which is safe to call repeatedly — that is the designed
+fallback, not an error. `wait_seconds` defaults to 45 so it degrades cleanly on
+clients you have not tuned.
+
+## How it runs
+
+There is no daemon to install and nothing to add to your login items. Every
+entry point — each CLI command, the MCP shim's startup — probes
+`127.0.0.1:5599/healthz` and spawns the server detached if nothing answers. The
+first card of the day brings it up; a reboot needs no autostart because the next
+invocation does it again. One process (~40MB idle) serves every session until you
+run `triago stop`.
+
+The port bind is the lock: if something is already there, triago reuses it, and if
+that something is a different protocol version (after an upgrade) triago asks it to
+stand down and starts the new one. Cards and decisions are files, so a crash
+mid-wait costs nothing — the server rescans `~/.triago` on start and the wait is
+re-issued.
+
+## Security
+
+triago holds review data and source excerpts, so it is not open to every process on
+your machine:
+
+- binds `127.0.0.1` only;
+- every `/api` request needs the bearer token in `~/.triago/token` (mode 0600),
+  compared in constant time. `triago open` hands it to the browser once through the
+  URL fragment, which is never sent to a server;
+- the `Host` header is checked against a localhost allowlist, which is what stops
+  a hostile page from resolving its own name to 127.0.0.1 and talking to triago;
+- a strict CSP (`script-src 'self'`), and rendered markdown is stripped of
+  anything executable before it reaches the DOM;
+- config values are never run through a shell — argv arrays only;
+- editor deep-links and tmux injection are off until you turn them on;
+- no telemetry, no network calls, no analytics. There is no phone-home to
+  disable.
+
+## Config
+
+`~/.triago/config.json`, all optional:
+
+```json
+{
+  "open_browser": "first-card",
+  "editor": { "enabled": true, "command": "code -g {abs}:{line}" },
+  "tmux": { "inject": true },
+  "notify": true,
+  "session_regex": "[A-Z][A-Z0-9]+-\\d+",
+  "repo_roots": { "myrepo": "/home/me/code/myrepo" }
+}
+```
+
+`open_browser` is `first-card` (open a tab only when none is listening), `always`
+or `never`. A tab that has been opened but never *activated* may not connect, so
+"none is listening" can stay true and every further card would open another tab —
+`open_browser_cooldown_sec` (default 300) is the backstop, and it is remembered
+across server restarts. Set `TRIAGO_NO_BROWSER=1` in scripts, CI or test runs to
+suppress opening entirely; the card is still posted, and the response says why no
+tab appeared. `editor.command` is an argv template — `{abs}`, `{file}`, `{line}`;
+IntelliJ is `idea --line {line} {abs}`, Vim is `xterm -e vim +{line} {abs}`. A
+finding's path is resolved against `repo_roots` and is refused if it escapes
+them. `session_regex` picks the session key out of the current git branch, which
+is how cards group in the sidebar.
+
+`tmux.inject` types a line into the pane that posted the card. Point it at an
+agent's pane, not a shell prompt — a shell will try to run the notice.
+
+## What triago is not
+
+Not a session client: no transcript, no model, no fleet control. Not a diff
+reviewer either — triago is for output an agent *generated as a list of items you
+have to answer*, not for annotating a patch line by line. If what you want is
+line comments on a diff, use your code host's review UI or a dedicated diff
+review tool; triago has nothing to add there.
+
+## Testing it
+
+`npm test` runs 19 integration tests (auth, long-poll wake-up, exit codes, SSE,
+restart-from-disk, MCP schemas). [TESTING.md](TESTING.md) is the manual
+walkthrough for the parts a test cannot judge — whether triage actually feels
+fast, the editor deep-link, tmux wake-up, and MCP from a real client.
+
+## Status
+
+M0: findings and doc cards, CLI with the full return ladder, MCP adapter, token
+auth. Used daily on real reviews. Next: questions and draft cards, packaging as a
+Claude Code plugin, and a proper name (`triago` is not the published one).
+
+MIT.
