@@ -63,6 +63,25 @@ The workflow already meets the requirements: it sets `id-token: write`, and Node
 automatic under trusted publishing, so the `--provenance` flag is redundant from
 then on — harmless to leave, but it can go.
 
+## Recording screenshots and demos
+
+Anything you record shows more than the card: the sidebar lists every other card
+in that home directory, the footer names the session, and each finding shows a
+file path. Record from a scratch home so none of that can be yours:
+
+```bash
+TRIAGO_HOME=/tmp/triago-demo triago demo --wait
+```
+
+That mints a separate token, starts with an empty sidebar, and shows only the
+demo card. Delete the directory afterwards. Check the frame for the terminal
+prompt too — a shell prompt showing a real path or hostname is the usual leak.
+
+The bundled fixture (`examples/demo-findings.json`) is deliberately generic —
+sessions, queues, pagination, tokens — so it says nothing about what anyone
+works on. Keep it that way: it is the first thing every new user sees, and it is
+in every frame of any demo.
+
 ## Versioning
 
 Pre-1.0 while the card schema can still change. The schema is the public

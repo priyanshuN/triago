@@ -57,11 +57,11 @@ only `summary` is required per finding:
   {
     "severity": "high",
     "verdict": "CONFIRMED",
-    "summary": "Retry loop re-sends the whole payload on partial failure",
-    "file": "src/dispatcher.ts",
+    "summary": "Retry re-sends the whole batch when a single item fails",
+    "file": "src/queue/retry.ts",
     "line": 197,
     "body": "Why this is wrong…",
-    "failure_scenario": "40-problem batch, 1 fails → all 40 re-sent → payload rejected.",
+    "failure_scenario": "Batch of 40, one fails → all 40 re-sent → the request exceeds the size limit and the whole batch is lost.",
     "suggested_fix": "- if (batch.failed) retry(batch)\n+ if (batch.failed) retry(batch.failedItems)"
   }
 ]

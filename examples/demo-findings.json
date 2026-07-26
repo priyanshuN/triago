@@ -7,92 +7,92 @@
       "verdict": "CONFIRMED",
       "category": "correctness",
       "repo": "demo",
-      "file": "src/routing/RoutePlanExecutor.java",
+      "file": "src/cache/session-store.ts",
       "line": 214,
-      "summary": "Route cache read before invalidation completes returns a stale plan",
-      "body": "The async clone path snapshots routeCache before invalidation finishes. When two runs for the same hub overlap, the second plans against the first run's vehicle assignments.",
-      "failure_scenario": "Back-to-back scheduler ticks: run B starts while run A's invalidation is in flight, B assigns orders to a vehicle A already released, and the duplicate assignment is persisted.",
-      "suggested_fix": "  synchronized (cacheLock) {\n-   RoutePlan plan = routeCache.get(hubId);\n+   routeCache.invalidate(hubId);\n+   RoutePlan plan = routeCache.get(hubId);\n  }"
+      "summary": "Session cache is read before invalidation completes, returning a stale record",
+      "body": "The refresh path snapshots the cache before invalidation finishes. When two requests for the same user overlap, the second reads the record the first has already replaced.",
+      "failure_scenario": "Two tabs refresh at once: the second request restores the permissions of a session that was just revoked, and the revocation appears to have silently failed.",
+      "suggested_fix": "  await withLock(userId, async () => {\n-   const session = await cache.get(userId);\n+   await cache.invalidate(userId);\n+   const session = await cache.get(userId);\n  });"
     },
     {
       "severity": "critical",
       "verdict": "CONFIRMED",
       "category": "resource-leak",
       "repo": "demo",
-      "file": "src/events/EventPublisher.java",
+      "file": "src/queue/publisher.ts",
       "line": 88,
-      "summary": "Producer is never closed on the empty-payload early return",
-      "body": "The early return skips the finally block, so the producer created two lines above leaks on that path.",
-      "failure_scenario": "Accounts with empty windows hit the early return every tick; producers accumulate until the broker connection limit is reached, roughly six hours in.",
-      "suggested_fix": "  if (events.isEmpty()) {\n-     return;\n+     producer.close();\n+     return;\n  }"
+      "summary": "Connection is never released on the empty-payload early return",
+      "body": "The early return skips the finally block, so the connection acquired two lines above leaks on that path.",
+      "failure_scenario": "Tenants with nothing to publish hit the early return every tick; connections accumulate until the pool is exhausted, roughly six hours in.",
+      "suggested_fix": "  if (events.length === 0) {\n-     return;\n+     conn.release();\n+     return;\n  }"
     },
     {
       "severity": "high",
       "verdict": "CONFIRMED",
       "category": "correctness",
       "repo": "demo",
-      "file": "src/slots/SlotWindowResolver.java",
+      "file": "src/api/pagination.ts",
       "line": 141,
-      "summary": "Window boundary off-by-one silently drops orders booked at the slot end",
-      "body": "Comparison uses isBefore(end) where the previous logic used !isAfter(end).",
-      "failure_scenario": "An order booked at exactly 18:00:00.000 for a 16:00-18:00 slot is never fetched. No error, it is just missing from the run.",
-      "suggested_fix": "- if (bookedAt.isBefore(window.end())) {\n+ if (!bookedAt.isAfter(window.end())) {"
+      "summary": "Cursor boundary is exclusive where it used to be inclusive, dropping a row per page",
+      "body": "The comparison moved from >= to >, so the record sitting exactly on the cursor is skipped rather than returned.",
+      "failure_scenario": "A client paging through 10,000 rows silently receives 9,900 of them. No error, no gap in the ids, just missing records.",
+      "suggested_fix": "- .where('created_at', '>', cursor)\n+ .where('created_at', '>=', cursor)"
     },
     {
       "severity": "high",
       "verdict": "PLAUSIBLE",
       "category": "robustness",
       "repo": "demo",
-      "file": "src/fleet/CapacityResolver.java",
+      "file": "src/auth/verify.ts",
       "line": 63,
-      "summary": "Null capacity profile for a vehicle type created after startup throws",
-      "body": "profiles.get(type) returns null for types added since the cache was warmed, and the following .weight() call throws.",
-      "failure_scenario": "Ops adds a vehicle type mid-day and the next run using it fails the whole solve instead of skipping that vehicle."
+      "summary": "Token verification has no clock-skew tolerance",
+      "body": "Expiry is compared against the local clock with no leeway, so a server running a second or two ahead of the issuer rejects tokens that are still valid.",
+      "failure_scenario": "One node drifts forward; a fraction of requests fail authentication with no pattern the user can see, and the failures move around as traffic rebalances."
     },
     {
       "severity": "medium",
       "verdict": "CONFIRMED",
       "category": "efficiency",
       "repo": "demo",
-      "file": "src/grid/DistanceTimeGrid.java",
+      "file": "src/http/client.ts",
       "line": 310,
-      "summary": "Identical coordinate pairs each trigger their own matrix fetch",
-      "body": "The memo key includes legType unnecessarily, so pickup and delivery legs at the same point both miss the cache. Latency, not correctness."
+      "summary": "Identical requests each open a connection instead of sharing the pool",
+      "body": "The memo key includes the request id, so two calls to the same endpoint never coalesce. Latency, not correctness."
     },
     {
       "severity": "medium",
       "verdict": "PLAUSIBLE",
       "category": "logging",
       "repo": "demo",
-      "file": "src/routing/RoutePlanExecutor.java",
+      "file": "src/api/handler.ts",
       "line": 89,
-      "summary": "New INFO log serialises the whole problem, about 2MB per run",
-      "body": "At production volume that is gigabytes a day, and customer addresses end up in the log store.",
-      "failure_scenario": "50 runs an hour at 2MB each is 2.4GB of log volume a day, carrying addresses and phone numbers into a system with different access rules."
+      "summary": "New INFO log serialises the whole request body, about 2MB per call",
+      "body": "At production volume that is gigabytes a day, and it carries customer data into a system with different access rules than the database it came from.",
+      "failure_scenario": "50 calls an hour at 2MB each is 2.4GB of log volume a day, including fields the privacy review explicitly scoped out of logging."
     },
     {
       "severity": "low",
       "verdict": "CONFIRMED",
       "category": "review-comment",
       "repo": "demo",
-      "file": "src/config/RoutingFlags.java",
+      "file": "src/config/flags.ts",
       "line": 21,
       "reviewer": "a-reviewer",
       "pr": "demo#2734",
       "comment_url": "https://example.invalid/demo/pull/2734#discussion_r1",
       "proposed_action": "Delete the field and its import, then reply on the thread confirming it is gone.",
       "summary": "Reviewer: dead feature-flag field left behind after the flag was removed",
-      "body": "This is what a card built from open PR comments looks like — reviewer, PR and a link to the thread, with the reply the agent proposes to send."
+      "body": "This is what a card built from open pull-request comments looks like — reviewer, PR and a link to the thread, with the reply the agent proposes to send."
     },
     {
       "severity": "info",
       "verdict": "CONFIRMED",
       "category": "test-coverage",
       "repo": "demo",
-      "file": "src/test/java/slots/SlotWindowResolverTest.java",
+      "file": "test/pagination.test.ts",
       "line": 228,
       "summary": "Test asserts an ordering the query does not guarantee",
-      "body": "The new test asserts the first result is the earliest slot, but the query has no ORDER BY. It passes today by accident of insertion order and will flake on a different engine."
+      "body": "The new test asserts the first result is the oldest row, but the query has no ORDER BY. It passes today by accident of insertion order and will flake on a different engine."
     }
   ]
 }
