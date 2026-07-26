@@ -13,7 +13,10 @@ it. The workflow is [.github/workflows/publish.yml](.github/workflows/publish.ym
    (Settings → Secrets and variables → Actions → New repository secret).
 3. **Make the repository public.** Provenance requires it, and so does anyone
    verifying the attestation.
-4. **Remove `"private": true` from package.json.** It is there on purpose: while
+4. **Delete the "Not published yet" note from the README** install section —
+   the `npm i -g triago` instructions above it become true at that moment, and a
+   README telling people to clone and build is the wrong first impression.
+5. **Remove `"private": true` from package.json.** It is there on purpose: while
    it is set, both `npm publish` and the workflow's guard refuse. Removing it is
    the deliberate act that says the package is ready to exist publicly.
 

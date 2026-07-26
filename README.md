@@ -14,30 +14,42 @@ most. triago turns that into an inbox: `j`/`k` to move, `f`/`s`/`d`/`t` to decid
 triago is not a client. It shows no transcript, runs no model, and never touches
 your repo — it renders what an agent hands it and returns what you decided.
 
-## Quickstart
-
-From a checkout:
+## Install
 
 ```bash
-npm install && npm run build && ln -s "$PWD/bin/triago" ~/.local/bin/triago
+npm i -g triago
 ```
 
-Then, from anywhere:
+That puts both `triago` and `triago-mcp` on your PATH. `npx triago@latest demo`
+works too, if you would rather not install anything.
+
+> **Not published yet.** Until the first release, install from a checkout:
+>
+> ```bash
+> git clone https://github.com/priyanshuN/triago && cd triago
+> npm install && npm run build
+> ln -s "$PWD/bin/triago" ~/.local/bin/triago
+> ln -s "$PWD/bin/triago-mcp" ~/.local/bin/triago-mcp
+> ```
+
+## Quickstart
 
 ```bash
 triago demo
 ```
 
-That posts a sample card so you can see the thing before writing a payload. For
-real use:
+That posts a sample card so you can see the thing before writing a payload. It
+starts the server on demand — there is no service to install — opens a tab, and
+leaves the card open for you to triage.
+
+For real use, point it at your own findings and block until they are answered:
 
 ```bash
 triago findings review.json --wait
 ```
 
-The first command starts the server on demand (no service to install), opens a
-tab, and blocks until you submit. `review.json` is either `{"title": "...",
-"findings": [...]}` or a bare array; only `summary` is required per finding:
+`review.json` is either `{"title": "...", "findings": [...]}` or a bare array;
+only `summary` is required per finding:
 
 ```json
 [
@@ -67,6 +79,17 @@ When you hit submit, the blocked command prints this and exits 0:
   ]
 }
 ```
+
+## Developing
+
+```bash
+npm install && npm run build     # dist/ carries the server and the prebuilt UI
+npm test                         # 26 tests; sets TRIAGO_NO_BROWSER itself
+npm run dev:web                  # Vite on :5600, proxying the API to :5599
+```
+
+[DESIGN.md](DESIGN.md) explains why the code is shaped the way it is;
+[TESTING.md](TESTING.md) is the manual walkthrough.
 
 ## Cards
 
