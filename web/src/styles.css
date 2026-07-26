@@ -31,6 +31,14 @@
   --del-bg: rgba(201, 60, 65, 0.07);
   --code-bg: #f0f2f4;
   --shadow: 0 1px 2px rgba(15, 23, 30, 0.05), 0 4px 16px rgba(15, 23, 30, 0.05);
+  /* Type scale: six steps. Every font-size in this file resolves to one of
+     these, so the UI stays a system rather than per-element tuning. */
+  --fs-micro: 11px; /* uppercase labels, kbd, rail meta */
+  --fs-sm: 12px;    /* chips, tally, verdict, diff, captions */
+  --fs-base: 13px;  /* detail prose, comments, buttons */
+  --fs-md: 14px;    /* row summaries, doc body, base */
+  --fs-lg: 16px;    /* card + brand titles */
+  --fs-xl: 20px;    /* doc h1 */
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code",
     "Ubuntu Sans Mono", "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto,
@@ -133,7 +141,9 @@ body {
   margin: 0;
   background: var(--ground);
   color: var(--text);
-  font: 14px/1.5 var(--sans);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
 }
 .mono {
@@ -175,7 +185,7 @@ button {
 .brand .name {
   font-family: var(--mono);
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-lg);
   letter-spacing: 0.02em;
 }
 .brand .name::after {
@@ -183,13 +193,13 @@ button {
   color: var(--accent);
 }
 .brand .sess {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: var(--faint);
   font-family: var(--mono);
 }
 .rail-label {
   padding: 10px 18px 6px;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -239,22 +249,22 @@ button {
   background: var(--fix);
 }
 .stream-title {
-  font-size: 12.5px;
+  font-size: var(--fs-base);
   font-weight: 600;
   line-height: 1.35;
 }
 .stream-meta {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: var(--dim);
   margin-top: 2px;
 }
 .stream-meta .mono {
-  font-size: 10.5px;
+  font-size: var(--fs-micro);
 }
 .rail-foot {
   padding: 12px 18px 16px;
   border-top: 1px solid var(--line-soft);
-  font-size: 10.5px;
+  font-size: var(--fs-micro);
   color: var(--faint);
   line-height: 1.6;
 }
@@ -289,7 +299,7 @@ button {
   background: var(--ground);
 }
 .card-title {
-  font-size: 16px;
+  font-size: var(--fs-lg);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -297,7 +307,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 99px;
@@ -316,7 +326,7 @@ button {
   font-variant-numeric: tabular-nums;
 }
 .tally .t {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 99px;
@@ -343,7 +353,10 @@ button {
   color: var(--defer);
 }
 .submit-btn {
-  font: 600 12.5px/1 var(--sans);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  line-height: 1;
+  font-family: var(--sans);
   padding: 9px 16px;
   border-radius: 7px;
   border: 1px solid var(--line);
@@ -362,7 +375,7 @@ button {
   filter: brightness(1.06);
 }
 .mark-rest {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--dim);
   background: none;
   border: none;
@@ -387,7 +400,7 @@ button {
   align-items: center;
   gap: 10px;
   padding: 20px 2px 8px;
-  font-size: 10.5px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -459,7 +472,7 @@ button {
   min-width: 0;
 }
 .row-summary .txt {
-  font-size: 13.5px;
+  font-size: var(--fs-md);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -472,7 +485,7 @@ button {
   font-weight: 500;
 }
 .floc {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--dim);
   flex-shrink: 0;
   font-family: var(--mono);
@@ -490,7 +503,7 @@ button {
   gap: 8px;
 }
 .verdict {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--faint);
@@ -499,7 +512,7 @@ button {
 .state {
   min-width: 64px;
   text-align: center;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 4px 10px;
@@ -533,11 +546,11 @@ button {
   margin: 0 0 10px;
   max-width: 68ch;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-base);
   white-space: pre-wrap;
 }
 .d-label {
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -549,7 +562,7 @@ button {
 }
 .scenario {
   color: var(--dim);
-  font-size: 12.5px;
+  font-size: var(--fs-base);
   max-width: 68ch;
   margin: 0;
 }
@@ -561,7 +574,7 @@ button {
   overflow-x: auto;
   margin: 0;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.55;
 }
 .diff div {
@@ -583,7 +596,7 @@ button {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--faint);
   font-family: var(--mono);
   margin-bottom: 12px;
@@ -603,7 +616,10 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font: 600 12px/1 var(--sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1;
+  font-family: var(--sans);
   padding: 7px 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -614,7 +630,7 @@ button {
 }
 .act kbd {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   padding: 1px 5px;
   border-radius: 4px;
   background: var(--raise);
@@ -654,7 +670,9 @@ button {
   width: 100%;
   min-height: 76px;
   resize: vertical;
-  font: 13px/1.55 var(--sans);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  font-family: var(--sans);
   padding: 9px 12px;
   border-radius: 6px;
   border: 1px solid var(--line);
@@ -673,12 +691,12 @@ button {
   gap: 14px;
   flex-wrap: wrap;
   margin-top: 7px;
-  font-size: 10.5px;
+  font-size: var(--fs-micro);
   color: var(--faint);
 }
 .comment-hint kbd {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   padding: 1px 5px;
   border-radius: 4px;
   background: var(--raise);
@@ -699,7 +717,7 @@ button {
   padding: 10px 26px;
   background: var(--ground);
   border-top: 1px solid var(--line-soft);
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: var(--dim);
   flex-wrap: wrap;
 }
@@ -715,7 +733,7 @@ button {
 }
 .keybar kbd {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: var(--fs-micro);
   padding: 2px 6px;
   border-radius: 4px;
   background: var(--surface);
@@ -734,7 +752,7 @@ button {
 }
 .global-note label {
   display: block;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -745,7 +763,9 @@ button {
   width: 100%;
   min-height: 84px;
   resize: vertical;
-  font: 12.5px/1.5 var(--sans);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  font-family: var(--sans);
   padding: 8px 11px;
   border-radius: 6px;
   border: 1px solid var(--line);
@@ -778,14 +798,14 @@ button {
 }
 .returned .r-title {
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-base);
   color: var(--fix);
   display: flex;
   gap: 8px;
   align-items: center;
 }
 .returned .r-sub {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--dim);
   margin: 4px 0 10px;
 }
@@ -796,7 +816,7 @@ button {
   background: var(--code-bg);
   border: 1px solid var(--line-soft);
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   line-height: 1.55;
   color: var(--dim);
   overflow-x: auto;
@@ -810,7 +830,7 @@ button {
   transform: translateX(-50%) translateY(8px);
   background: var(--text);
   color: var(--ground);
-  font-size: 12.5px;
+  font-size: var(--fs-base);
   font-weight: 600;
   padding: 9px 16px;
   border-radius: 8px;
@@ -833,7 +853,7 @@ button {
 }
 .md {
   max-width: 74ch;
-  font-size: 14px;
+  font-size: var(--fs-md);
   line-height: 1.65;
 }
 .md h1,
@@ -844,13 +864,13 @@ button {
   margin: 26px 0 10px;
 }
 .md h1 {
-  font-size: 21px;
+  font-size: var(--fs-xl);
 }
 .md h2 {
-  font-size: 17px;
+  font-size: var(--fs-lg);
 }
 .md h3 {
-  font-size: 14.5px;
+  font-size: var(--fs-md);
   text-transform: none;
 }
 .md h1:first-child,
@@ -866,7 +886,7 @@ button {
 }
 .md code {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--fs-base);
   background: var(--code-bg);
   border: 1px solid var(--line-soft);
   border-radius: 4px;
@@ -883,7 +903,7 @@ button {
   background: none;
   border: none;
   padding: 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.55;
 }
 .md blockquote {
@@ -894,7 +914,7 @@ button {
 }
 .md table {
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--fs-base);
   display: block;
   overflow-x: auto;
 }
@@ -906,7 +926,7 @@ button {
 }
 .md th {
   background: var(--raise);
-  font-size: 11px;
+  font-size: var(--fs-micro);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--dim);
@@ -931,12 +951,12 @@ button {
 }
 .center h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-lg);
   color: var(--text);
 }
 .center pre {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--fs-base);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -946,7 +966,7 @@ button {
 .banner {
   background: var(--del-bg);
   color: var(--sev-crit);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   padding: 7px 26px;
   border-bottom: 1px solid var(--line-soft);

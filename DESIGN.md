@@ -126,7 +126,12 @@ and no timeout is treated as a failure — `exit 3` means "you were busy."
 
 ### Frontend: tokens, not a framework
 
-React plus hand-written CSS with a custom-property token system. No Tailwind, no
+React plus hand-written CSS with a custom-property token system, including a
+**six-step type scale** (`--fs-micro` 11 / `--fs-sm` 12 / `--fs-base` 13 /
+`--fs-md` 14 / `--fs-lg` 16 / `--fs-xl` 20). Every `font-size` in the stylesheet
+resolves to one of those steps; there are no literal pixel sizes left. Font
+stacks lead with `system-ui`, so the UI wears the platform's own face rather than
+falling through to a metric clone. No Tailwind, no
 component library — deliberately. The UI is one dense keyboard-driven inbox whose
 visual language was designed as a token set first; utility classes and a
 primitives library would have added dependencies without covering a single
