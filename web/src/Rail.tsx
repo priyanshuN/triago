@@ -1,6 +1,14 @@
+import { useState } from "react";
 import type { CardSummary } from "./api";
+import { setTheme, storedTheme, type Theme } from "./theme";
 
 const timeOf = (iso: string): string => iso.slice(11, 16);
+
+const THEMES: readonly { value: Theme; label: string }[] = [
+  { value: "system", label: "auto" },
+  { value: "light", label: "light" },
+  { value: "dark", label: "dark" },
+];
 
 export function Rail({
   cards,
@@ -16,6 +24,7 @@ export function Rail({
   const current = cards.find((c) => c.id === currentId);
   const session = current?.session ?? cards.at(-1)?.session ?? "";
   const waiting = cards.filter((c) => c.status === "open");
+  const [theme, pickTheme] = useState<Theme>(storedTheme);
 
   return (
     <nav className="rail">
@@ -75,6 +84,22 @@ export function Rail({
         ) : (
           <span className="off mono">server offline — retrying</span>
         )}
+        <div className="theme-seg" role="group" aria-label="Colour theme">
+          {THEMES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              className={`seg${theme === t.value ? " on" : ""}`}
+              aria-pressed={theme === t.value}
+              onClick={() => {
+                setTheme(t.value);
+                pickTheme(t.value);
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
     </nav>
   );
