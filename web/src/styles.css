@@ -714,6 +714,17 @@ button {
   padding: 0 14px;
   white-space: pre;
 }
+/* Prose in suggested_fix: wrap it. A horizontal scrollbar on a paragraph hides
+   the end of a sentence behind a gesture, and there is no column alignment
+   here worth protecting — unlike an actual diff, which keeps `pre` above. */
+.diff.prose {
+  overflow-x: visible;
+}
+.diff.prose div {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  max-width: 92ch;
+}
 .diff .add {
   background: var(--add-bg);
   color: var(--diff-add);
@@ -956,7 +967,10 @@ button {
   line-height: 1.55;
   color: var(--dim);
   overflow-x: auto;
-  max-height: 320px;
+  /* This panel exists to prove the agent got what you decided, and 320px showed
+     about a fifth of a nine-item payload. Still bounded — a 500-finding card
+     must not turn the page into one long JSON dump. */
+  max-height: min(60vh, 640px);
 }
 
 .toast {

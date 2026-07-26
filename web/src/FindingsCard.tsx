@@ -66,7 +66,11 @@ function FixBlock({ text }: { text: string }) {
   const lines = text.replace(/\n+$/, "").split("\n");
   const isDiff = lines.some((l) => /^[+-]/.test(l));
   return (
-    <pre className="diff">
+    // A real diff must not wrap — wrapping breaks the column alignment that
+    // makes it readable — so it scrolls sideways instead. Agents also send
+    // prose in this field, and prose has no alignment to protect, so it wraps
+    // rather than hiding itself behind a horizontal scrollbar.
+    <pre className={isDiff ? "diff" : "diff prose"}>
       {lines.map((line, i) => (
         <div
           key={i}
@@ -553,8 +557,8 @@ export function FindingsCard({
           <div className="returned" ref={returnedRef}>
             <div className="r-title">✓ Decisions returned to agent</div>
             <div className="r-sub">
-              The blocked <span className="mono">triago wait {card.id}</span> call resolved with this
-              payload.
+              Exactly what the agent gets for <span className="mono">{card.id}</span> — the blocked
+              call if one was waiting, otherwise the next read.
             </div>
             <pre>{JSON.stringify(decisions, null, 2)}</pre>
           </div>

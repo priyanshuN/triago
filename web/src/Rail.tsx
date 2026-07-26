@@ -24,6 +24,10 @@ export function Rail({
   const current = cards.find((c) => c.id === currentId);
   const session = current?.session ?? cards.at(-1)?.session ?? "";
   const waiting = cards.filter((c) => c.status === "open");
+  // Prefer the card being looked at, then the newest. Naming the oldest open
+  // card made "agent waiting" appear in the corner of a card you had just
+  // submitted, which reads as the submission not having landed.
+  const waitingOn = waiting.find((c) => c.id === currentId) ?? waiting.at(-1);
   const [theme, pickTheme] = useState<Theme>(storedTheme);
 
   return (
@@ -68,9 +72,10 @@ export function Rail({
         ))}
       </div>
       <div className="rail-foot">
-        {waiting.length > 0 ? (
+        {waitingOn ? (
           <>
-            agent waiting on <span className="mono">triago wait {waiting[0]!.id}</span>
+            agent waiting on <span className="mono">triago wait {waitingOn.id}</span>
+            {waiting.length > 1 && ` · ${waiting.length - 1} more`}
             <br />
           </>
         ) : (
