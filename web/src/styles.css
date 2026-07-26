@@ -144,7 +144,9 @@ body {
   font-size: var(--fs-md);
   line-height: 1.5;
   font-family: var(--sans);
-  -webkit-font-smoothing: antialiased;
+  /* Deliberately NOT setting -webkit-font-smoothing. It forces grayscale
+     antialiasing, which discards subpixel rendering and makes small semibold
+     text look soft on any 1x display — most screens that are not Apple's. */
 }
 .mono {
   font-family: var(--mono);

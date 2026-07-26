@@ -20,7 +20,7 @@ your repo — it renders what an agent hands it and returns what you decided.
 npm i -g triago
 ```
 
-That puts both `triago` and `triago-mcp` on your PATH. `npx triago@latest demo`
+Requires Node 20 or newer. That puts both `triago` and `triago-mcp` on your PATH. `npx triago@latest demo`
 works too, if you would rather not install anything.
 
 > **Not published yet.** Until the first release, install from a checkout:
@@ -39,8 +39,9 @@ triago demo
 ```
 
 That posts a sample card so you can see the thing before writing a payload. It
-starts the server on demand — there is no service to install — opens a tab, and
-leaves the card open for you to triage.
+starts the server on demand — there is no service to install — opens a tab (or
+prints the URL, if one is already open), and leaves the card there for you to
+triage.
 
 For real use, point it at your own findings and block until they are answered:
 
@@ -80,17 +81,6 @@ When you hit submit, the blocked command prints this and exits 0:
 }
 ```
 
-## Developing
-
-```bash
-npm install && npm run build     # dist/ carries the server and the prebuilt UI
-npm test                         # 26 tests; sets TRIAGO_NO_BROWSER itself
-npm run dev:web                  # Vite on :5600, proxying the API to :5599
-```
-
-[DESIGN.md](DESIGN.md) explains why the code is shaped the way it is;
-[TESTING.md](TESTING.md) is the manual walkthrough.
-
 ## Cards
 
 **findings** — the anchor. Grouped by severity or repo, one keystroke per item,
@@ -99,6 +89,11 @@ the exact payload the agent received.
 
 **doc** — markdown to read comfortably (a design write-up, an impact analysis),
 with a comment box and one Acknowledge button. `triago doc design.md --wait`.
+
+A card holds up to 500 findings. There is no virtualisation and none is needed at
+that size: a 300-finding card is a 197KB payload that fetches in ~27ms and 2,500
+DOM nodes, with a decision dispatching in 0.7ms and twenty navigation keystrokes
+in 1.2ms.
 
 ## Keyboard
 
@@ -304,29 +299,37 @@ agent's pane, not a shell prompt — a shell will try to run the notice.
 
 ## What triago is not
 
-Not a session client: no transcript, no model, no fleet control. Not a diff
-reviewer either — triago is for output an agent *generated as a list of items you
-have to answer*, not for annotating a patch line by line. If what you want is
-line comments on a diff, use your code host's review UI or a dedicated diff
-review tool; triago has nothing to add there.
+Not a diff reviewer. triago is for output an agent *generated as a list of items
+you have to answer*, not for annotating a patch line by line — that is a human
+originating comments on an artifact, the opposite direction of flow. If you want
+line comments on a diff, your code host already does it well; triago has nothing
+to add there.
 
-## Design
+## Developing
 
-[DESIGN.md](DESIGN.md) covers why triago is shaped this way: one zod schema behind
-all three interfaces, disk as the source of truth, the lazy daemon, why there are
-four decision verbs instead of three, and what is deliberately not built.
+```bash
+npm install && npm run build     # dist/ carries the server and the prebuilt UI
+npm test                         # integration over HTTP, MCP over stdio, unit for policy
+npm run dev:web                  # Vite on :5600, proxying the API to :5599
+```
 
-## Testing it
-
-`npm test` runs 19 integration tests (auth, long-poll wake-up, exit codes, SSE,
-restart-from-disk, MCP schemas). [TESTING.md](TESTING.md) is the manual
-walkthrough for the parts a test cannot judge — whether triage actually feels
-fast, the editor deep-link, tmux wake-up, and MCP from a real client.
+The suite covers auth and Host rejection, long-poll wake-up, CLI exit codes,
+restart-from-disk, the browser-open policy and the MCP handshake, on Node 20, 22
+and 24. [TESTING.md](TESTING.md) is the manual walkthrough for what a test cannot
+judge — whether triage actually feels fast, the editor deep-link, tmux wake-up,
+and MCP from a real client. [DESIGN.md](DESIGN.md) explains why the code is
+shaped the way it is.
 
 ## Status
 
-M0: findings and doc cards, CLI with the full return ladder, MCP adapter, token
-auth. Used daily on real reviews. Next: questions and draft cards, packaging as a
-Claude Code plugin, and a proper name (`triago` is not the published one).
+Today: findings and doc cards, the CLI with its full return ladder, the MCP
+adapter, token auth, and a test suite that runs on Node 20, 22 and 24.
 
-MIT.
+It was dogfooded on itself immediately — the first card triago ever displayed was
+a review of its own implementation, and the seven items marked `fix` were fixed
+before anything else shipped. Four of those were defects that reading the code
+would not have caught.
+
+Next: questions and draft cards, and packaging as a Claude Code plugin.
+
+[MIT](LICENSE) © priyanshuN

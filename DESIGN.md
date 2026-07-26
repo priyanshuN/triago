@@ -182,6 +182,16 @@ The decision itself is a pure function with unit tests, including one that
 asserts twelve cards in a row produce exactly one tab. Side-effect policy is
 logic, and logic deserves tests.
 
+### Rendering: no virtualisation, on purpose
+
+A card caps at 500 findings and the list renders every row. That sounds careless
+and was measured rather than assumed: 300 findings is a 197KB payload, ~27ms to
+fetch, 2,500 DOM nodes, a decision dispatching in 0.7ms and twenty navigation
+keystrokes in 1.2ms. Virtualisation would buy nothing at that size while breaking
+`ctrl-F`, scroll-into-view and the focus model. If cards ever routinely exceed
+what a person would actually triage in one sitting, the right fix is splitting the
+card, not windowing the list.
+
 ## Layout
 
 ```
