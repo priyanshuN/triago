@@ -477,7 +477,9 @@ button {
 }
 .row-summary .txt {
   font-size: var(--fs-md);
-  font-weight: 600;
+  /* 500, not 600: at 15px the size already marks this as the scan layer, and
+     the lighter weight keeps a wall of summaries from reading as a shout. */
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -486,7 +488,7 @@ button {
   color: var(--dim);
   text-decoration: line-through;
   text-decoration-color: var(--faint);
-  font-weight: 500;
+  font-weight: 400;
 }
 .floc {
   font-size: var(--fs-sm);
