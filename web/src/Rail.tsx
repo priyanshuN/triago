@@ -151,8 +151,11 @@ export function Rail({
             <br />
           </>
         )}
+        {/* The port is whatever this page was served from — TRIAGO_PORT moves it,
+            and a hardcoded 5599 would misreport the one detail someone reads off
+            this line when they are working out what to connect to. */}
         {connected ? (
-          <span className="mono">live · :5599</span>
+          <span className="mono">live · :{location.port || "80"}</span>
         ) : (
           <span className="off mono">server offline — retrying</span>
         )}
