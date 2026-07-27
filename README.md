@@ -4,6 +4,7 @@
 [![node](https://img.shields.io/node/v/%40triago%2Fcli)](https://nodejs.org)
 [![ci](https://github.com/priyanshuN/triago/actions/workflows/ci.yml/badge.svg)](https://github.com/priyanshuN/triago/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/priyanshuN/triago/badge)](https://scorecard.dev/viewer/?uri=github.com/priyanshuN/triago)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13838/badge)](https://www.bestpractices.dev/projects/13838)
 [![license](https://img.shields.io/npm/l/%40triago%2Fcli)](LICENSE)
 
 **A local decision surface for CLI coding agents.** The agent posts a card, you
