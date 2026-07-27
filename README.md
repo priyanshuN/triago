@@ -1,8 +1,17 @@
 # triago
 
+[![ci](https://github.com/priyanshuN/triago/actions/workflows/ci.yml/badge.svg)](https://github.com/priyanshuN/triago/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/priyanshuN/triago/badge)](https://scorecard.dev/viewer/?uri=github.com/priyanshuN/triago)
+
 **A local decision surface for CLI coding agents.** The agent posts a card, you
 triage it in a browser, and your decisions come back to the agent as structured
 data. Nothing leaves your machine.
+
+Before you install a server that reads your source: it binds `127.0.0.1`, has **no
+install scripts**, makes **no network calls at runtime**, and ships from CI with npm
+provenance so the tarball is traceable to a public commit. Four runtime
+dependencies. [SECURITY.md](SECURITY.md) states the threat model, and is honest
+about what those badges do and do not certify.
 
 Terminals are good at streaming work and bad at two things agents do constantly:
 showing you twelve findings with hierarchy, and letting you respond to each one.

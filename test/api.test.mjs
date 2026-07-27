@@ -111,6 +111,41 @@ test("a foreign Host header is refused (DNS rebinding)", async () => {
   assert.equal(await get(`localhost:${PORT}`), 200);
 });
 
+test("the static route cannot be walked out of the web directory", async () => {
+  // Guarded by a single startsWith in server.ts, and it is the exact bug class
+  // our own dependency was advised for. fetch() normalises `..` out of a URL, so
+  // these go over node:http to put the traversal on the wire verbatim.
+  const raw = (rawPath) =>
+    new Promise((resolve) => {
+      const req = http.request(
+        { host: "127.0.0.1", port: PORT, path: rawPath, headers: { host: `127.0.0.1:${PORT}` } },
+        (res) => {
+          let body = "";
+          res.on("data", (chunk) => (body += chunk));
+          res.on("end", () => resolve({ status: res.statusCode, body }));
+        },
+      );
+      req.end();
+    });
+
+  for (const attempt of [
+    "/../package.json",
+    "/../../package.json",
+    "/..%2f..%2fpackage.json",
+    "/%2e%2e%2f%2e%2e%2fpackage.json",
+    "/..%5c..%5cpackage.json", // decoded backslash: a separator on Windows
+    "/assets/../../package.json",
+    "/../../../../../../etc/passwd",
+  ]) {
+    const { status, body } = await raw(attempt);
+    assert.equal(status, 200, `${attempt} should fall back to the SPA shell`);
+    assert.ok(
+      !body.includes("@modelcontextprotocol/sdk") && !body.includes("root:x:"),
+      `${attempt} served a file from outside the web directory`,
+    );
+  }
+});
+
 test("invalid cards are rejected with field detail", async () => {
   const res = await fetch(`${BASE}/api/cards`, {
     method: "POST",

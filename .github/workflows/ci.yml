@@ -26,3 +26,14 @@ jobs:
         env:
           # Without this the suite would try to open browser tabs on the runner.
           TRIAGO_NO_BROWSER: "1"
+
+      # Advisories in the tree users actually install (--omit=dev). The gate sits
+      # at critical rather than high on purpose: a high advisory can exist with no
+      # published fix — one does today, see SECURITY.md — and a build that cannot
+      # be made green teaches people to ignore it. The full report always prints,
+      # and Dependabot raises the rest as PRs.
+      - name: Audit the shipped dependency tree
+        if: matrix.node == '24'
+        run: |
+          npm audit --omit=dev || true
+          npm audit --omit=dev --audit-level=critical
