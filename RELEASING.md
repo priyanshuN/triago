@@ -4,21 +4,32 @@ Publishing runs in CI, never from a laptop, so every release carries an npm
 provenance attestation linking the tarball to the commit and workflow that built
 it. The workflow is [.github/workflows/publish.yml](.github/workflows/publish.yml).
 
-## One-time setup
+## One-time setup — done, and what it cost
 
-1. **Create an npm automation token.** npmjs.com → Access Tokens → Generate →
-   *Automation*. A granular token scoped to this package is better than a classic
-   one; it needs publish rights and nothing else.
-2. **Add it as a repository secret** named `NPM_TOKEN`
-   (Settings → Secrets and variables → Actions → New repository secret).
-3. **Make the repository public.** Provenance requires it, and so does anyone
-   verifying the attestation.
-4. **Delete the "Not published yet" note from the README** install section —
-   the `npm i -g triago` instructions above it become true at that moment, and a
-   README telling people to clone and build is the wrong first impression.
-5. **Remove `"private": true` from package.json.** It is there on purpose: while
-   it is set, both `npm publish` and the workflow's guard refuse. Removing it is
-   the deliberate act that says the package is ready to exist publicly.
+All of this is complete. It is written down because each step failed in a way
+that was not obvious from the docs, and the next person to publish something
+from a repository like this will hit the same three walls.
+
+1. **The package is scoped, and had to be.** npm refuses to create the bare name
+   `triago` — `403 Package name too similar to existing package tiag`. That is
+   the registry's typosquat filter, and it applies to everyone, so the unscoped
+   name is not available to anyone. `@triago/cli` publishes fine, and a scope
+   has the better property anyway: only its owner can publish under it.
+2. **Classic tokens no longer exist.** npm has retired them; the only kind you
+   can create is a granular access token. For CI the decisive setting is the
+   **"Bypass two-factor authentication"** checkbox, which is **off by default** —
+   without it the workflow dies on `EOTP: This operation requires a one-time
+   password`, which CI cannot answer.
+3. **The first token cannot be scoped to this package.** A granular token can
+   only list packages that already exist, so the token for release one has to
+   allow *all packages*. That is the strongest argument for step 4 below: it is a
+   broader credential than you want lying around, so retire it immediately.
+   Write-enabled granular tokens now expire in 7 days by default and 90 at most,
+   so it would need rotating otherwise.
+4. **The repository is public and `"private": true` is gone from package.json.**
+   Provenance requires a public repository; the private flag was the deliberate
+   guard that made both `npm publish` and the workflow refuse until someone
+   removed it on purpose.
 
 ## Every release
 
@@ -41,7 +52,7 @@ Check the package page shows the **Provenance** section with the commit and
 workflow, then confirm the install path a stranger will actually use:
 
 ```bash
-npx triago@latest demo
+npx @triago/cli@latest demo
 ```
 
 ## After the first release: drop the token
@@ -57,6 +68,8 @@ the package exists — hence the token for release one, then:
 2. Fill in the organisation/user (`priyanshuN`), the repository (`triago`) and
    the workflow filename (`publish.yml`).
 3. Delete the `NPM_TOKEN` repository secret and revoke the token on npmjs.com.
+   Do this promptly rather than eventually: as step 3 above explains, that token
+   is authorised for every package on the account, not just this one.
 
 The workflow already meets the requirements: it sets `id-token: write`, and Node
 24 ships npm 11.13, comfortably past the 11.5.1 minimum. Provenance becomes

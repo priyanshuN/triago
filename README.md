@@ -28,11 +28,16 @@ your repo — it renders what an agent hands it and returns what you decided.
 ## Install
 
 ```bash
-npm i -g triago
+npm i -g @triago/cli
 ```
 
-Requires Node 20 or newer. That puts both `triago` and `triago-mcp` on your PATH. `npx triago@latest demo`
-works too, if you would rather not install anything.
+Requires Node 20 or newer. That puts both `triago` and `triago-mcp` on your PATH — the commands are
+unscoped, only the package name is. `npx @triago/cli@latest demo` works too, if you would rather
+not install anything.
+
+> The package is scoped because npm refuses the bare name `triago`: it is too
+> close to an existing package called `tiag`, so the registry will not create it
+> for anyone. The scope is owned by this project, so only it can publish there.
 
 Or from a checkout, if you would rather read it first:
 
