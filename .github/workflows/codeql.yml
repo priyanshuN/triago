@@ -16,6 +16,12 @@ on:
     - cron: "0 4 * * 1"
   workflow_dispatch:
 
+# Read-only by default; the analyze job escalates to exactly the one write it
+# needs. Without this line the token starts at whatever the repository default
+# happens to be, which is not a per-workflow decision anyone made.
+permissions:
+  contents: read
+
 jobs:
   analyze:
     runs-on: ubuntu-latest

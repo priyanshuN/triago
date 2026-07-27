@@ -7,6 +7,9 @@
 triage it in a browser, and your decisions come back to the agent as structured
 data. Nothing leaves your machine.
 
+![Eight findings triaged by keyboard — j/k to move, f/s/d/t to decide, ctrl+enter to
+submit — ending with the decisions JSON returned to the waiting agent](https://raw.githubusercontent.com/priyanshuN/triago/main/docs/demo.gif)
+
 Before you install a server that reads your source: it binds `127.0.0.1`, has **no
 install scripts**, makes **no network calls at runtime**, and ships from CI with npm
 provenance so the tarball is traceable to a public commit. Four runtime
