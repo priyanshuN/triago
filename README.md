@@ -213,8 +213,24 @@ the terminal out of habit.
 ### Claude Code
 
 ```bash
-claude mcp add --scope user triago -- triago-mcp     # every project, not just this one
-claude mcp list                                # triago: triago-mcp - ✔ Connected
+claude mcp add --scope user triago -- "$(command -v triago-mcp)"   # every project, not just this one
+claude mcp list                                       # triago: … - ✔ Connected
+```
+
+`command -v` records the absolute path rather than the bare name, which matters
+more than it looks. **If you use nvm, registering `triago-mcp` by name will fail
+with `ENOENT`** — nvm puts its `bin` on `PATH` from your shell profile, and an
+editor or desktop app launched from a dock or launcher never runs that profile,
+so the agent looks for a command it genuinely cannot see. The failure gives no
+hint at the cause. Resolving the path once, in the shell where nvm *is* active,
+sidesteps it for every version manager. Re-run the command after switching Node
+versions: a global install lives under the version that installed it.
+
+To check the way the agent will see it rather than the way your shell does, spawn
+it with your shell's `PATH` removed:
+
+```bash
+env -i HOME="$HOME" PATH=/usr/local/bin:/usr/bin:/bin "$(command -v triago-mcp)" </dev/null
 ```
 
 Tool calls are capped at about 60 seconds by default, which is shorter than a
@@ -227,7 +243,7 @@ real triage, so raise it once in `~/.claude/settings.json`:
 ### Codex
 
 ```bash
-codex mcp add triago -- triago-mcp
+codex mcp add triago -- "$(command -v triago-mcp)"
 codex mcp get triago
 ```
 
@@ -235,7 +251,9 @@ Codex takes its timeouts per server in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.triago]
-command = "triago-mcp"
+# Absolute path, for the reason in the Claude Code section above: a bare name is
+# resolved against the agent's PATH, which is not your shell's.
+command = "/usr/local/bin/triago-mcp"   # `command -v triago-mcp` prints yours
 startup_timeout_sec = 20
 tool_timeout_sec = 600
 ```
