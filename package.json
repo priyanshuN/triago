@@ -35,7 +35,8 @@
   "files": [
     "dist",
     "examples",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "npm run build:server && npm run build:web",

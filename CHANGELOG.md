@@ -8,6 +8,26 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## [0.2.1] — 2026-07-27
+
+**Added**
+
+- `triago --version`, which had been missing. The version was only reachable
+  through `triago status`, and that needs the server up — so it was unavailable
+  in exactly the situation you want it, reporting a bug where the server will
+  not start. `-v` and a bare `version` work too. The new issue template asks for
+  it as its first required field, so shipping the template without the flag left
+  a public form asking for something the package could not produce.
+- The changelog now ships in the npm package rather than living only on GitHub.
+
+**Changed**
+
+- Prettier is enforced in CI, so style is settled by a formatter instead of in
+  review. Rewrapping only — no behaviour changed.
+- The repository grew a contribution guide, a code of conduct, issue and pull
+  request templates, and an OpenSSF Best Practices passing badge. None of that
+  affects the installed package beyond the README it ships with.
+
 ## [0.2.0] — 2026-07-27
 
 **Added**
@@ -102,6 +122,7 @@ name `triago` for anybody — it is too close to an existing package called
 Tagged but never published; npm rejected the unscoped name. No 0.1.0 exists on
 the registry.
 
+[0.2.1]: https://github.com/priyanshuN/triago/releases/tag/v0.2.1
 [0.2.0]: https://github.com/priyanshuN/triago/releases/tag/v0.2.0
 [0.1.6]: https://github.com/priyanshuN/triago/releases/tag/v0.1.6
 [0.1.5]: https://github.com/priyanshuN/triago/releases/tag/v0.1.5
