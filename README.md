@@ -10,7 +10,9 @@ data. Nothing leaves your machine.
 Before you install a server that reads your source: it binds `127.0.0.1`, has **no
 install scripts**, makes **no network calls at runtime**, and ships from CI with npm
 provenance so the tarball is traceable to a public commit. Four runtime
-dependencies. [SECURITY.md](SECURITY.md) states the threat model, and is honest
+dependencies. A card's markdown is treated as untrusted — raw HTML is escaped
+into visible text rather than sanitised, so agent output cannot introduce markup
+into the page. [SECURITY.md](SECURITY.md) states the threat model, and is honest
 about what those badges do and do not certify.
 
 Terminals are good at streaming work and bad at two things agents do constantly:
