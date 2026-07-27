@@ -105,6 +105,33 @@ test("the server ships instructions saying when to post and what each decision o
   assert.match(instructions, /terminal/, "never says what to do with short output");
 });
 
+/**
+ * The first real review through this tool came back 9 discuss / 1 fix, and every
+ * discuss carried a comment that was an *answer* — the premise is wrong, that
+ * code is out of scope, that cannot happen while assigned. The instructions at
+ * the time defined discuss as "stop and bring it back to the human", so an agent
+ * following them would have gone back to ask nine questions that had already
+ * been answered in front of it.
+ *
+ * The verb says how to file the item; the comment says what to do. If that ever
+ * stops being spelled out, the tool starts talking past the human at exactly the
+ * point where they took the trouble to explain something.
+ */
+test("the instructions tell the agent the comment outranks the verb", () => {
+  const instructions = initResult.instructions ?? "";
+  assert.match(instructions, /comment/i, "never mentions comments at all");
+  assert.match(
+    instructions,
+    /comment[\s\S]{0,120}(substance|before acting|answer)/i,
+    "does not say the comment carries the substance",
+  );
+  assert.match(
+    instructions,
+    /(withdraw|corrections?|authoritative)/i,
+    "does not tell the agent to take a correction rather than defend the finding",
+  );
+});
+
 test("every decision verb appears in the findings tool description", async () => {
   const { result } = await rpc("tools/list", {});
   const description = result.tools.find((t) => t.name === "triago_post_findings").description;

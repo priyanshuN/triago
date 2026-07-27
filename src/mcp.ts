@@ -87,10 +87,23 @@ When to use it:
 What each returned decision obliges you to do:
 - fix — act on it now, in this session.
 - skip — drop it; do not raise it again on this branch.
-- discuss — stop and bring it back to the human before acting.
+- discuss — the human has something to say about this one before you act.
 - defer — real, but out of scope for now: record it as tracked follow-up work.
   Never silently treat a defer as a skip.
-Per-item comments and the card's global comment carry the same weight.
+
+Read the comment before acting on the verb. The comment is the substance; the
+verb only says how to file it. A discuss carrying a comment is the human's
+answer, not a request for a meeting — act on what it says. Only an empty discuss
+means stop and ask.
+
+Most comments on a review are corrections. Someone who knows the system will
+tell you the premise was wrong, the code is out of scope, or a constraint you
+could not see makes the finding moot. Treat that as authoritative: withdraw the
+finding rather than defending it, and check whether the same correction also
+invalidates neighbouring findings you raised for the same reason. Do not
+re-raise a corrected item later in the session.
+
+The card's global comment applies to every item without one of its own.
 
 If a card cannot be posted, print the list in the terminal instead — never
 discard it. If the call times out you get a card id back: call
