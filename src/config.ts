@@ -22,15 +22,19 @@ export const Config = z.object({
       /** Argv template; {file} {line} {abs} are substituted. Never run through a shell. */
       command: z.string().default("code -g {abs}:{line}"),
     })
-    .default({}),
+    // prefault, not default: zod 4's `default` hands the value straight back as
+    // output without parsing it, so `{}` would stay `{}` and every read of
+    // cfg.editor.enabled would be undefined. `prefault` feeds it through the
+    // schema, which is what fills in the field defaults below it.
+    .prefault({}),
   /** Wake a waiting agent by typing into its tmux pane. Off by default. */
-  tmux: z.object({ inject: z.boolean().default(false) }).default({}),
+  tmux: z.object({ inject: z.boolean().default(false) }).prefault({}),
   /** Desktop notification on new cards (notify-send / osascript). Off by default. */
   notify: z.boolean().default(false),
   /** Session key inference from the current git branch. */
   session_regex: z.string().default("[A-Z][A-Z0-9]+-\\d+"),
   /** repo name -> absolute path, used to resolve finding.file for editor deep-links. */
-  repo_roots: z.record(z.string()).default({}),
+  repo_roots: z.record(z.string(), z.string()).default({}),
 });
 export type Config = z.infer<typeof Config>;
 
