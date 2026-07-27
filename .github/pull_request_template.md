@@ -25,4 +25,4 @@ real client — say which walkthrough in TESTING.md you ran, and on what.
       TESTING.md for anything only a human can judge, DESIGN.md if you changed
       *why* something is shaped the way it is
 - [ ] No new runtime dependency, no runtime network call, no install script
-      (see [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md#what-will-be-turned-down))
+      (see [CONTRIBUTING.md](https://github.com/priyanshuN/triago/blob/main/CONTRIBUTING.md#what-will-be-turned-down))
