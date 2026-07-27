@@ -43,10 +43,7 @@ export function DocCard({
   const [note, setNote] = useState(decisions?.global_comment ?? "");
   const [submitting, setSubmitting] = useState(false);
   const locked = card.status === "decided" || decisions !== null;
-  const html = useMemo(
-    () => markdown.parse(card.markdown, { async: false }),
-    [card.markdown],
-  );
+  const html = useMemo(() => markdown.parse(card.markdown, { async: false }), [card.markdown]);
 
   const noteRef = useRef(note);
   noteRef.current = note;
@@ -125,8 +122,8 @@ export function DocCard({
           <div className="returned">
             <div className="r-title">✓ Returned to agent</div>
             <div className="r-sub">
-              The blocked <span className="mono">triago wait {card.id}</span> call resolved with this
-              payload.
+              The blocked <span className="mono">triago wait {card.id}</span> call resolved with
+              this payload.
             </div>
             <pre>{JSON.stringify(decisions, null, 2)}</pre>
           </div>

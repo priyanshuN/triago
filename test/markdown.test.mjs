@@ -66,7 +66,10 @@ test("a scheme that merely starts with an allowed one is still refused", () => {
 });
 
 test("escapeHtml closes every character that could open a tag", () => {
-  assert.equal(escapeHtml('<script>alert("x")</script>'), "&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;");
+  assert.equal(
+    escapeHtml('<script>alert("x")</script>'),
+    "&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;",
+  );
   assert.equal(escapeHtml("a & b"), "a &amp; b");
   // The ampersand must be escaped first, or the others get double-escaped.
   assert.equal(escapeHtml("&lt;"), "&amp;lt;");

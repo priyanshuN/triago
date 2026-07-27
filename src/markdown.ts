@@ -62,5 +62,7 @@ export function isSafeHref(href: string): boolean {
 }
 
 function codePoint(value: number): string {
-  return Number.isFinite(value) && value >= 0 && value <= 0x10ffff ? String.fromCodePoint(value) : "";
+  return Number.isFinite(value) && value >= 0 && value <= 0x10ffff
+    ? String.fromCodePoint(value)
+    : "";
 }

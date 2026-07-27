@@ -1,5 +1,16 @@
-import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { Decision, DecisionsRecord, StoredFinding, StoredFindingsCard } from "../../src/schema";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type {
+  Decision,
+  DecisionsRecord,
+  StoredFinding,
+  StoredFindingsCard,
+} from "../../src/schema";
 import { api } from "./api";
 
 const SEV_ORDER = ["critical", "high", "medium", "low", "info"] as const;
@@ -52,7 +63,10 @@ function buildGroups(card: StoredFindingsCard): Group[] {
   })).filter((g) => g.items.length > 0);
 }
 
-function initialDraft(card: StoredFindingsCard, decisions: DecisionsRecord | null): Record<string, Draft> {
+function initialDraft(
+  card: StoredFindingsCard,
+  decisions: DecisionsRecord | null,
+): Record<string, Draft> {
   const decided = new Map((decisions?.items ?? []).map((i) => [i.id, i]));
   return Object.fromEntries(
     card.findings.map((f) => [
@@ -280,7 +294,11 @@ export function FindingsCard({
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const { decisions: record, tmux_injected, delivered } = await api.submit(card.id, {
+      const {
+        decisions: record,
+        tmux_injected,
+        delivered,
+      } = await api.submit(card.id, {
         items: card.findings.map((f) => ({
           id: f.id,
           decision: current[f.id]!.decision!,
@@ -554,14 +572,14 @@ export function FindingsCard({
                       )}
                       {/* Locked: show the note you left as prose, not as a
                           greyed-out input you might try to click into. */}
-                      {locked
-                        ? state?.comment && (
-                            <>
-                              <div className="d-label">Your note</div>
-                              <p className="left-note">{state.comment}</p>
-                            </>
-                          )
-                        : (
+                      {locked ? (
+                        state?.comment && (
+                          <>
+                            <div className="d-label">Your note</div>
+                            <p className="left-note">{state.comment}</p>
+                          </>
+                        )
+                      ) : (
                         <div className="comment-row">
                           <textarea
                             className="comment"
@@ -627,16 +645,16 @@ export function FindingsCard({
                  disk — but somebody has to go and collect them, and that is the
                  one thing this page can say and the agent cannot. */
               <div className="r-sub">
-                Nothing was waiting — the call that posted this card had already ended. The decisions
-                are saved. Ask your agent to pick them up, in this session or a new one:
+                Nothing was waiting — the call that posted this card had already ended. The
+                decisions are saved. Ask your agent to pick them up, in this session or a new one:
                 <CopyLine text={`triago show ${card.id}`} />
                 An agent with the MCP server can fetch them itself — tell it to read the decisions
                 for card <span className="mono">{card.id}</span>.
               </div>
             ) : (
               <div className="r-sub">
-                Exactly what the agent gets for <span className="mono">{card.id}</span> — the blocked
-                call if one was waiting, otherwise the next read.
+                Exactly what the agent gets for <span className="mono">{card.id}</span> — the
+                blocked call if one was waiting, otherwise the next read.
               </div>
             )}
             <pre>{JSON.stringify(decisions, null, 2)}</pre>

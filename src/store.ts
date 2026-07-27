@@ -109,8 +109,7 @@ export function listCards(session?: string): CardSummary[] {
 }
 
 export type Lookup =
-  | { ok: true; card: StoredCard }
-  | { ok: false; status: 404 | 409; error: string };
+  { ok: true; card: StoredCard } | { ok: false; status: 404 | 409; error: string };
 
 /**
  * Accepts a full id or an unambiguous prefix, so ids stay hand-typable. An

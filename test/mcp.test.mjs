@@ -22,7 +22,12 @@ const PORT = 5694;
 const HOME = fs.mkdtempSync(path.join(os.tmpdir(), "triago-mcp-test-"));
 // TRIAGO_NO_BROWSER is not optional here: without it every card posted by these
 // tests opens a real browser tab.
-const env = { ...process.env, TRIAGO_HOME: HOME, TRIAGO_PORT: String(PORT), TRIAGO_NO_BROWSER: "1" };
+const env = {
+  ...process.env,
+  TRIAGO_HOME: HOME,
+  TRIAGO_PORT: String(PORT),
+  TRIAGO_NO_BROWSER: "1",
+};
 
 let proc;
 let nextId = 0;
@@ -142,10 +147,12 @@ test("every decision verb appears in the findings tool description", async () =>
 
 test("the four tools are advertised", async () => {
   const { result } = await rpc("tools/list", {});
-  assert.deepEqual(
-    result.tools.map((t) => t.name).sort(),
-    ["triago_await_decisions", "triago_list_cards", "triago_post_doc", "triago_post_findings"],
-  );
+  assert.deepEqual(result.tools.map((t) => t.name).sort(), [
+    "triago_await_decisions",
+    "triago_list_cards",
+    "triago_post_doc",
+    "triago_post_findings",
+  ]);
 });
 
 test("triago_post_findings' schema is the one generated from schema.ts", async () => {
@@ -155,7 +162,15 @@ test("triago_post_findings' schema is the one generated from schema.ts", async (
 
   const item = tool.inputSchema.properties.findings.items;
   assert.deepEqual(item.required, ["summary"], "only summary is mandatory on a finding");
-  for (const field of ["severity", "verdict", "file", "line", "failure_scenario", "suggested_fix", "comment_url"]) {
+  for (const field of [
+    "severity",
+    "verdict",
+    "file",
+    "line",
+    "failure_scenario",
+    "suggested_fix",
+    "comment_url",
+  ]) {
     assert.ok(field in item.properties, `finding schema is missing ${field}`);
   }
   assert.deepEqual(item.properties.severity.enum, ["critical", "high", "medium", "low", "info"]);
@@ -216,8 +231,16 @@ test("triago_await_decisions returns pending rather than hanging forever", async
  */
 test("the instructions rule out polling and specify how to resume", () => {
   const instructions = initResult.instructions ?? "";
-  assert.match(instructions, /do not poll|not poll in a loop/i, "never warns against a polling loop");
-  assert.match(instructions, /wait_seconds 0|wait_seconds: 0/i, "never gives the free instant check");
+  assert.match(
+    instructions,
+    /do not poll|not poll in a loop/i,
+    "never warns against a polling loop",
+  );
+  assert.match(
+    instructions,
+    /wait_seconds 0|wait_seconds: 0/i,
+    "never gives the free instant check",
+  );
   assert.match(instructions, /next turn/i, "never says when to pick the card back up");
   assert.match(instructions, /triago_list_cards/, "no recovery path for a lost card id");
 });

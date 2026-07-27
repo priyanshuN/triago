@@ -137,8 +137,7 @@ server.registerTool(
   "triago_post_findings",
   {
     title: "Post findings for triage",
-    description:
-      `Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Prefer this over printing more than about five findings in the terminal: the human triages each item as ${VERBS} with optional comments, and the tool returns those decisions as structured data. Each decision obliges a specific follow-up — fix now, drop a skip, stop and ask on a discuss, and record a defer as tracked follow-up work rather than dropping it.`,
+    description: `Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Prefer this over printing more than about five findings in the terminal: the human triages each item as ${VERBS} with optional comments, and the tool returns those decisions as structured data. Each decision obliges a specific follow-up — fix now, drop a skip, stop and ask on a discuss, and record a defer as tracked follow-up work rather than dropping it.`,
     inputSchema: {
       title: z
         .string()
@@ -224,7 +223,8 @@ server.registerTool(
   "triago_list_cards",
   {
     title: "List triago cards",
-    description: "List cards posted to triago, newest last, with how many items are still undecided.",
+    description:
+      "List cards posted to triago, newest last, with how many items are still undecided.",
     inputSchema: {
       session: z.string().max(120).optional(),
       open_only: z.boolean().default(false),

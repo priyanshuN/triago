@@ -1,0 +1,10 @@
+dist
+node_modules
+web/dist
+web/src/fonts
+docs
+package-lock.json
+
+# Prose is wrapped by hand here — these files are read as much as the code is,
+# and reflowing them turns every later edit into a paragraph-wide diff.
+*.md

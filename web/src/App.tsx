@@ -142,7 +142,9 @@ export default function App() {
   }
 
   const onSubmitted = (record: DecisionsRecord): void => {
-    setDetail((prev) => (prev ? { card: { ...prev.card, status: "decided" }, decisions: record } : prev));
+    setDetail((prev) =>
+      prev ? { card: { ...prev.card, status: "decided" }, decisions: record } : prev,
+    );
     void loadCards();
   };
 

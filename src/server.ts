@@ -48,9 +48,7 @@ type Event = { type: "card.created" | "card.decided" | "card.deleted"; id: strin
  * immediately, not left to discover it by waiting out the clock.
  */
 type WaitOutcome =
-  | { kind: "decided"; record: DecisionsRecord }
-  | { kind: "deleted" }
-  | { kind: "timeout" };
+  { kind: "decided"; record: DecisionsRecord } | { kind: "deleted" } | { kind: "timeout" };
 
 /** Long-polls parked on a card, and SSE clients watching the whole home. */
 const waiters = new Map<string, Set<(outcome: WaitOutcome) => void>>();
@@ -150,7 +148,8 @@ export function shouldOpenBrowser(input: {
   if (input.mode === "never") return { open: false, reason: "open_browser is never" };
   if (input.mode === "always") return { open: true, reason: "open_browser is always" };
   if (input.listeners > 0) return { open: false, reason: "a tab is already listening" };
-  const since = input.lastOpenedAt === undefined ? Infinity : (input.now - input.lastOpenedAt) / 1000;
+  const since =
+    input.lastOpenedAt === undefined ? Infinity : (input.now - input.lastOpenedAt) / 1000;
   if (since < input.cooldownSec) {
     return { open: false, reason: `a tab was opened ${Math.round(since)}s ago` };
   }
@@ -255,10 +254,7 @@ export function buildApp(token: string, port: number): Hono {
       shouldOpen ? undefined : `${url}#t=${token}`,
     );
 
-    return c.json(
-      { id: card.id, url, opened_browser: shouldOpen, browser: decision.reason },
-      201,
-    );
+    return c.json({ id: card.id, url, opened_browser: shouldOpen, browser: decision.reason }, 201);
   });
 
   app.get("/api/cards", (c) => {
@@ -400,9 +396,10 @@ export function buildApp(token: string, port: number): Hono {
     const rel = decodeURIComponent(url.pathname).replace(/^\/+/, "");
     const target = path.resolve(WEB_DIR, rel);
     const inside = target === WEB_DIR || target.startsWith(WEB_DIR + path.sep);
-    const file = inside && rel && fs.existsSync(target) && fs.statSync(target).isFile()
-      ? target
-      : path.join(WEB_DIR, "index.html");
+    const file =
+      inside && rel && fs.existsSync(target) && fs.statSync(target).isFile()
+        ? target
+        : path.join(WEB_DIR, "index.html");
     if (!fs.existsSync(file)) {
       return c.text("triago frontend is not built — run `npm run build` in the triago repo", 500);
     }
@@ -430,7 +427,13 @@ export function startServer(port = DEFAULT_PORT): void {
     fs.writeFileSync(
       SERVER_FILE,
       JSON.stringify(
-        { pid: process.pid, port: info.port, version: version(), protocol: PROTOCOL, started_at: STARTED_AT },
+        {
+          pid: process.pid,
+          port: info.port,
+          version: version(),
+          protocol: PROTOCOL,
+          started_at: STARTED_AT,
+        },
         null,
         2,
       ),

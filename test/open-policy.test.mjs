@@ -12,7 +12,13 @@ const { shouldOpenBrowser } = await import(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "server.js")
 );
 
-const base = { mode: "first-card", listeners: 0, cooldownSec: 300, lastOpenedAt: undefined, now: 10_000_000 };
+const base = {
+  mode: "first-card",
+  listeners: 0,
+  cooldownSec: 300,
+  lastOpenedAt: undefined,
+  now: 10_000_000,
+};
 
 test("opens for the first card when nothing is listening", () => {
   assert.equal(shouldOpenBrowser(base).open, true);

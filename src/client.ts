@@ -2,7 +2,14 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_PORT, DIST_DIR, LOG_FILE, ensureHome, readOrCreateToken } from "./paths.js";
-import type { CardInput, CardSummary, DecisionsInput, DecisionsRecord, Health, StoredCard } from "./schema.js";
+import type {
+  CardInput,
+  CardSummary,
+  DecisionsInput,
+  DecisionsRecord,
+  Health,
+  StoredCard,
+} from "./schema.js";
 import { PROTOCOL } from "./schema.js";
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -23,10 +30,14 @@ export async function probe(port: number, timeoutMs = 700): Promise<Health | nul
 function spawnDetachedServer(port: number): void {
   ensureHome();
   const log = fs.openSync(LOG_FILE, "a");
-  const child = spawn(process.execPath, [path.join(DIST_DIR, "cli.js"), "serve", "--port", String(port)], {
-    detached: true,
-    stdio: ["ignore", log, log],
-  });
+  const child = spawn(
+    process.execPath,
+    [path.join(DIST_DIR, "cli.js"), "serve", "--port", String(port)],
+    {
+      detached: true,
+      stdio: ["ignore", log, log],
+    },
+  );
   child.on("error", () => {});
   child.unref();
 }
@@ -75,7 +86,12 @@ export class TriagoClient {
     return `http://127.0.0.1:${this.port}`;
   }
 
-  private async call<T>(method: string, route: string, body?: unknown, timeoutMs?: number): Promise<T> {
+  private async call<T>(
+    method: string,
+    route: string,
+    body?: unknown,
+    timeoutMs?: number,
+  ): Promise<T> {
     const res = await fetch(this.baseUrl + route, {
       method,
       headers: {
@@ -102,7 +118,10 @@ export class TriagoClient {
   }
 
   listCards(session?: string): Promise<{ cards: CardSummary[] }> {
-    return this.call("GET", `/api/cards${session ? `?session=${encodeURIComponent(session)}` : ""}`);
+    return this.call(
+      "GET",
+      `/api/cards${session ? `?session=${encodeURIComponent(session)}` : ""}`,
+    );
   }
 
   getCard(id: string): Promise<{ card: StoredCard; decisions: DecisionsRecord | null }> {

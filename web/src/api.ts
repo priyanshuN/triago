@@ -1,9 +1,4 @@
-import type {
-  CardSummary,
-  DecisionsInput,
-  DecisionsRecord,
-  StoredCard,
-} from "../../src/schema";
+import type { CardSummary, DecisionsInput, DecisionsRecord, StoredCard } from "../../src/schema";
 
 /** Types come straight from the server's zod schemas — see src/schema.ts. */
 export type { CardSummary, DecisionsRecord, StoredCard };

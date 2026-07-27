@@ -104,7 +104,10 @@ export function notify(title: string, body: string, openUrl?: string): void {
   if (!loadConfig().notify) return;
   if (openUrl && notifyWithOpen(title, body, openUrl)) return;
   if (process.platform === "darwin") {
-    detached("osascript", ["-e", `display notification ${JSON.stringify(body)} with title ${JSON.stringify(title)}`]);
+    detached("osascript", [
+      "-e",
+      `display notification ${JSON.stringify(body)} with title ${JSON.stringify(title)}`,
+    ]);
   } else {
     detached("notify-send", ["-a", "triago", title, body]);
   }
@@ -137,9 +140,14 @@ export function resolveFile(repo: string | undefined, file: string): string | nu
 
 export function openInEditor(repo: string | undefined, file: string, line?: number): OpenResult {
   const cfg = loadConfig();
-  if (!cfg.editor.enabled) return { opened: false, reason: "editor deep-links are disabled in ~/.triago/config.json" };
+  if (!cfg.editor.enabled)
+    return { opened: false, reason: "editor deep-links are disabled in ~/.triago/config.json" };
   const abs = resolveFile(repo, file);
-  if (!abs) return { opened: false, reason: `could not resolve ${file} (set repo_roots in ~/.triago/config.json)` };
+  if (!abs)
+    return {
+      opened: false,
+      reason: `could not resolve ${file} (set repo_roots in ~/.triago/config.json)`,
+    };
 
   const parts = cfg.editor.command.split(/\s+/).filter(Boolean);
   if (!parts.length) return { opened: false, reason: "editor.command is empty" };
