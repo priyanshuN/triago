@@ -13,6 +13,9 @@ import os from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
+// The built schema is the source of truth for the decision verbs, so these
+// assertions grow automatically when a verb is added.
+import { decisions } from "../dist/schema.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 5694;
@@ -23,6 +26,7 @@ const env = { ...process.env, TRIAGO_HOME: HOME, TRIAGO_PORT: String(PORT), TRIA
 
 let proc;
 let nextId = 0;
+let initResult;
 const pending = new Map();
 
 function rpc(method, params) {
@@ -67,6 +71,7 @@ before(async () => {
     clientInfo: { name: "triago-test", version: "1" },
   });
   assert.equal(init.result.serverInfo.name, "triago");
+  initResult = init.result;
   proc.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n");
 });
 
@@ -84,6 +89,28 @@ after(async () => {
     /* already gone */
   }
   fs.rmSync(HOME, { recursive: true, force: true });
+});
+
+// The trigger surface is the product here: an agent decides whether to post a
+// card from these strings alone. `defer` shipped for a week missing from the
+// findings description because both were hand-written, so both are now asserted
+// against the schema's own list of decisions.
+test("the server ships instructions saying when to post and what each decision obliges", () => {
+  const instructions = initResult.instructions ?? "";
+  assert.ok(instructions.length > 200, "instructions must carry the policy, not a tagline");
+  for (const verb of decisions) {
+    assert.match(instructions, new RegExp(`\\b${verb}\\b`), `instructions never mention "${verb}"`);
+  }
+  assert.match(instructions, /five|5/, "no threshold for when a card is warranted");
+  assert.match(instructions, /terminal/, "never says what to do with short output");
+});
+
+test("every decision verb appears in the findings tool description", async () => {
+  const { result } = await rpc("tools/list", {});
+  const description = result.tools.find((t) => t.name === "triago_post_findings").description;
+  for (const verb of decisions) {
+    assert.match(description, new RegExp(`\\b${verb}\\b`), `description omits "${verb}"`);
+  }
 });
 
 test("the four tools are advertised", async () => {

@@ -17,7 +17,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { ensureServer, waitForDecisions } from "./client.js";
 import { DEFAULT_PORT, version } from "./paths.js";
-import { CardInput, Finding } from "./schema.js";
+import { CardInput, Finding, decisions } from "./schema.js";
 
 const waitSeconds = z
   .number()
@@ -58,14 +58,57 @@ async function postAndMaybeWait(input: CardInput, seconds: number): Promise<Json
   };
 }
 
-const server = new McpServer({ name: "triago", version: version() });
+/** Joined from the schema, so a new decision verb cannot go unmentioned here. */
+const VERBS = decisions.join(" / ");
+
+/**
+ * Shipped with the server rather than left to each user's instruction file.
+ *
+ * A tool the model has to be *told* to reach for in CLAUDE.md or AGENTS.md only
+ * works for whoever wrote that file. Clients surface `instructions` to the model
+ * before it sees a single tool call, so the policy — when a card is warranted,
+ * and what each decision obliges — travels with the install.
+ */
+const INSTRUCTIONS = `triago shows the human a browser card built from a list you produced, collects a
+decision on every item, and returns those decisions to you as structured data.
+
+It exists because a terminal can neither present a long list with hierarchy nor
+collect a response per item. Printed lists get skimmed or accepted wholesale,
+which is exactly where per-item judgment matters most.
+
+When to use it:
+- More than about five findings, review comments, or proposed changes: call
+  triago_post_findings instead of printing them.
+- A judgment document over roughly 80 lines — a design write-up, an impact
+  analysis, an RCA draft: call triago_post_doc instead of printing it.
+- Short output, a single question, or anything needing no per-item response:
+  stay in the terminal. Do not post a card for those.
+
+What each returned decision obliges you to do:
+- fix — act on it now, in this session.
+- skip — drop it; do not raise it again on this branch.
+- discuss — stop and bring it back to the human before acting.
+- defer — real, but out of scope for now: record it as tracked follow-up work.
+  Never silently treat a defer as a skip.
+Per-item comments and the card's global comment carry the same weight.
+
+If a card cannot be posted, print the list in the terminal instead — never
+discard it. If the call times out you get a card id back: call
+triago_await_decisions with it, or end your turn and read the decisions later.
+Nothing is lost either way, because cards and decisions are files on the human's
+own disk.`;
+
+const server = new McpServer(
+  { name: "triago", version: version() },
+  { instructions: INSTRUCTIONS },
+);
 
 server.registerTool(
   "triago_post_findings",
   {
     title: "Post findings for triage",
     description:
-      "Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Use this instead of printing a long findings list in the terminal: the human triages each item as fix / skip / discuss with optional comments, and the tool returns those decisions as structured data.",
+      `Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Prefer this over printing more than about five findings in the terminal: the human triages each item as ${VERBS} with optional comments, and the tool returns those decisions as structured data. Each decision obliges a specific follow-up — fix now, drop a skip, stop and ask on a discuss, and record a defer as tracked follow-up work rather than dropping it.`,
     inputSchema: {
       title: z
         .string()
@@ -104,7 +147,7 @@ server.registerTool(
   {
     title: "Post a document to read",
     description:
-      "Post markdown (a design write-up, an impact analysis, a plan) to the triago browser surface for comfortable reading, and wait for the human to acknowledge it with an optional comment.",
+      "Post markdown (a design write-up, an impact analysis, a plan) to the triago browser surface for comfortable reading, and wait for the human to acknowledge it with an optional comment. Prefer this over printing a judgment document longer than roughly 80 lines into the terminal.",
     inputSchema: {
       title: z.string().min(1).max(200),
       markdown: z.string().min(1).max(400000),
