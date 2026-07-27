@@ -203,3 +203,21 @@ test("triago_await_decisions returns pending rather than hanging forever", async
   assert.equal(payload.status, "pending");
   assert.equal(payload.card_id, cards[0].id);
 });
+
+/**
+ * The resume protocol, which is the whole async half of the product.
+ *
+ * A real triage outlasts the tool call that posted the card, so a timeout is the
+ * normal ending. The two ways to get that wrong are opposite: sit in a polling
+ * loop (burns the turn, blocks the agent, dies with the session) or forget the
+ * card entirely and leave the human to notice and ask. The instructions have to
+ * rule out the first and specify the second, including the zero-second call that
+ * makes checking free.
+ */
+test("the instructions rule out polling and specify how to resume", () => {
+  const instructions = initResult.instructions ?? "";
+  assert.match(instructions, /do not poll|not poll in a loop/i, "never warns against a polling loop");
+  assert.match(instructions, /wait_seconds 0|wait_seconds: 0/i, "never gives the free instant check");
+  assert.match(instructions, /next turn/i, "never says when to pick the card back up");
+  assert.match(instructions, /triago_list_cards/, "no recovery path for a lost card id");
+});

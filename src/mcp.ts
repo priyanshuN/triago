@@ -54,7 +54,12 @@ async function postAndMaybeWait(input: CardInput, seconds: number): Promise<Json
     status: "pending",
     card_id: posted.id,
     url: posted.url,
-    hint: `Human has not submitted yet. Call triago_await_decisions with card_id "${posted.id}" to keep waiting, or end your turn and read it later.`,
+    hint:
+      `Human has not submitted yet — this is normal, a real triage outlasts this call. ` +
+      `End your turn and say the card is open. Do not sit in a polling loop: you would burn the ` +
+      `turn waiting and lose it anyway when the session ends. Next time you are invoked, call ` +
+      `triago_await_decisions with card_id "${posted.id}" and wait_seconds 0 — it returns at once ` +
+      `with the decisions if they are in, and costs nothing if they are not.`,
   };
 }
 
@@ -105,11 +110,23 @@ re-raise a corrected item later in the session.
 
 The card's global comment applies to every item without one of its own.
 
+Picking a card back up:
+A real triage takes longer than this tool call, so a timeout is the normal
+outcome, not a failure. When it happens, end your turn and tell the human the
+card is open. Do not poll in a loop — you would spend the turn waiting, block
+yourself from doing anything else, and lose the loop the moment the session
+ends. The decisions are on disk and will keep.
+
+Instead, pick it up on your next turn, whoever prompts it and whenever that is:
+call triago_await_decisions with the card id and wait_seconds 0. It answers
+immediately — with the decisions if they are in, and at no cost if they are not.
+Do that before anything else while a card of yours is outstanding, so the human
+never has to ask you to go and look. If you have lost the id, or you are a new
+session that did not post the card, triago_list_cards finds it.
+
 If a card cannot be posted, print the list in the terminal instead — never
-discard it. If the call times out you get a card id back: call
-triago_await_decisions with it, or end your turn and read the decisions later.
-Nothing is lost either way, because cards and decisions are files on the human's
-own disk.`;
+discard it. Nothing is lost either way, because cards and decisions are files on
+the human's own disk.`;
 
 const server = new McpServer(
   { name: "triago", version: version() },
