@@ -180,6 +180,7 @@ triago open [id]                open the browser surface (hands the token over)
 triago rm <id…>                 delete cards
 triago prune                    bulk delete — prints the list, --yes to do it
 triago status | triago stop        server state / shut it down
+triago --version                print the version
 ```
 
 Flags: `--title`, `--source`, `--session`, `--group-by severity|repo|none`,
@@ -391,6 +392,24 @@ and 24. [TESTING.md](TESTING.md) is the manual walkthrough for what a test canno
 judge — whether triage actually feels fast, the editor deep-link, tmux wake-up,
 and MCP from a real client. [DESIGN.md](DESIGN.md) explains why the code is
 shaped the way it is.
+
+## Contributing
+
+Yes, please. [CONTRIBUTING.md](CONTRIBUTING.md) is written so you can tell
+*before* spending an evening whether a change will be merged: how to get it
+running, the five things about the codebase that place most changes, what a good
+PR looks like — and a straight list of [what will be turned
+down](CONTRIBUTING.md#what-will-be-turned-down), which is the part worth reading
+first.
+
+[`good first issue`](https://github.com/priyanshuN/triago/labels/good%20first%20issue)
+issues name the file and say what "done" means.
+[Discussions](https://github.com/priyanshuN/triago/discussions) is for anything
+you would rather ask than file. Security problems go through the private route
+in [SECURITY.md](SECURITY.md), never an issue.
+
+MIT, no CLA. Everyone is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Status
 

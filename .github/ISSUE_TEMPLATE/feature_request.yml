@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest something triago should do
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the situation you were in rather than the control you want
+        added. Every good change in this repo so far came from someone
+        describing a triage that went wrong, and in most cases the fix was not
+        the feature they first asked for.
+
+        [CONTRIBUTING.md](https://github.com/priyanshuN/triago/blob/main/CONTRIBUTING.md#what-will-be-turned-down)
+        lists what is deliberately out of scope — worth a look first, so you
+        don't spend the effort on something that will be turned down.
+
+  - type: textarea
+    id: situation
+    attributes:
+      label: What were you doing
+      description: The concrete situation. What the agent produced, what you were trying to decide, where it broke down.
+      placeholder: |
+        An agent posted 40 findings across 4 repos. I wanted to answer everything
+        in one repo and defer the rest, but the only grouping I could act on was
+        severity, so I paged up and down hunting for the repo I cared about.
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: What do you do about it today
+      description: The workaround, even if it is "give up and read the terminal". This is often the most useful field.
+    validations:
+      required: false
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you think should change
+      description: Optional. Skip it if you would rather just report the problem.
+    validations:
+      required: false

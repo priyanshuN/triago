@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question, or not sure it's a bug
+    url: https://github.com/priyanshuN/triago/discussions
+    about: Discussions. Wiring an agent up, whether something is expected, anything you'd rather ask than file.
+  - name: Security vulnerability
+    url: https://github.com/priyanshuN/triago/security/advisories/new
+    about: Report privately, never as an issue. SECURITY.md states the threat model and what is in scope.

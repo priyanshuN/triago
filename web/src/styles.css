@@ -108,16 +108,18 @@
   /* Type scale: six steps, one multiplier, no two steps closer than 2px.
      --ui-scale grows or shrinks the whole system without touching components. */
   --ui-scale: 1;
-  --fs-micro: calc(11px * var(--ui-scale));  /* uppercase labels, kbd, verdict */
-  --fs-sm: calc(12.5px * var(--ui-scale));   /* mono paths, chips, tally, diff */
+  --fs-micro: calc(11px * var(--ui-scale)); /* uppercase labels, kbd, verdict */
+  --fs-sm: calc(12.5px * var(--ui-scale)); /* mono paths, chips, tally, diff */
   --fs-base: calc(14.5px * var(--ui-scale)); /* prose, comments, buttons */
-  --fs-md: calc(16.5px * var(--ui-scale));   /* row summaries, doc body */
-  --fs-lg: calc(22px * var(--ui-scale));     /* card + brand titles */
-  --fs-xl: calc(26px * var(--ui-scale));     /* doc h1 */
-  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", "JetBrains Mono",
-    "Cascadia Code", Menlo, Consolas, monospace;
-  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+  --fs-md: calc(16.5px * var(--ui-scale)); /* row summaries, doc body */
+  --fs-lg: calc(22px * var(--ui-scale)); /* card + brand titles */
+  --fs-xl: calc(26px * var(--ui-scale)); /* doc h1 */
+  --mono:
+    "IBM Plex Mono", ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas,
+    monospace;
+  --sans:
+    "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
+    Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -484,7 +486,7 @@ button {
 }
 /* Wraps to two lines rather than ellipsing to a stub. This was nowrap on the
    theory that the rail carried the title in full, so the header could afford to
-   lose characters — but a real one ("Code review (ultra) — SED-5406 branch
+   lose characters — but a real one ("Code review (ultra) — PROJ-4821 branch
    diff, 3 repos") was ground down to a few words, and reading it needed a
    hover. The title is what tells you what you are looking at; it should not sit
    behind an interaction. The controls keep flex-shrink: 0, so the row grows
@@ -513,7 +515,7 @@ button {
    real title off at 1250px. Here the row wraps instead and the title takes the
    full width uncut, which is worth more than keeping everything on one line.
    The threshold is set from a genuine title rather than a short one: "Code
-   review (ultra) — SED-5406 branch diff, 3 repos" is the case to survive. */
+   review (ultra) — PROJ-4821 branch diff, 3 repos" is the case to survive. */
 @media (max-width: 1440px) {
   .card-head {
     flex-wrap: wrap;
@@ -672,7 +674,9 @@ button {
 }
 .row.focused {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), var(--shadow);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    var(--shadow);
 }
 .row-line {
   display: grid;
@@ -1137,7 +1141,9 @@ button {
   border-radius: 8px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   z-index: 10;
 }
 .toast.show {

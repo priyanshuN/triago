@@ -1,0 +1,80 @@
+name: Bug report
+description: Something behaves differently than documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The four fields below answer most reports on their
+        own — a card that never appeared and a card that appeared but returned
+        nothing are completely different bugs, and the version tells them apart.
+
+        **Not here:** security problems go through the private route in
+        [SECURITY.md](https://github.com/priyanshuN/triago/blob/main/SECURITY.md),
+        and questions go to
+        [Discussions](https://github.com/priyanshuN/triago/discussions).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+      placeholder: |
+        Posted a 12-finding card with `triago findings review.json --wait`.
+        Expected the browser to open. No tab appeared and the command sat there.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: How was triago invoked
+      description: The CLI and the MCP adapter fail in different places.
+      options:
+        - CLI (triago …)
+        - MCP, from Claude Code
+        - MCP, from Codex
+        - MCP, from another client
+        - The browser interface itself
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: triago version
+      description: "`triago --version`"
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Node version and OS
+      description: "`node -v` and your OS. Say if you use nvm, volta or asdf — PATH is behind a real class of MCP failures."
+      placeholder: "v22.11.0, Ubuntu 24.04, nvm"
+    validations:
+      required: true
+
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of `triago status`
+      description: Says whether the server is up, which version is serving, and what it can see on disk. Automatically formatted as code.
+      render: text
+      placeholder: |
+        triago up · pid 21877 · v0.2.0 · http://127.0.0.1:5599 · home /home/you/.triago
+        6 cards · 2 open · 4 decided
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: |
+        A card id, the payload that caused it (with anything private removed), server output, or a browser console error. Cards live in `~/.triago/cards/<id>/`.
+    validations:
+      required: false
