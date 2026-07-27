@@ -45,8 +45,64 @@ export function tmuxInject(pane: string | undefined, line: string): boolean {
   return send.status === 0;
 }
 
-export function notify(title: string, body: string): void {
+/**
+ * A notification you can click to open the card.
+ *
+ * This is the only channel that reaches someone who is not looking at the
+ * screen, and it is the channel that matters most in the case it exists for: no
+ * tab was opened, so the notification is the *only* thing that arrives. Telling
+ * someone a card is waiting and then making them go and find it is most of the
+ * way to telling them nothing.
+ *
+ * Linux only, and only where the notification daemon implements actions.
+ * `notify-send --wait` stays alive until the notification is dismissed and
+ * prints the chosen action's key, so this holds one short-lived process per
+ * notification rather than polling anything. macOS `display notification` has
+ * no click target without a third-party binary, so there it stays plain — worth
+ * degrading rather than taking a dependency for.
+ */
+let actionSupport: boolean | null = null;
+
+/**
+ * `--action` and `--wait` arrived in libnotify 0.8; 0.7.x rejects them as
+ * unknown options and prints nothing at all. Since the spawn is detached with
+ * its errors swallowed, using them blind on an older notify-send would silently
+ * remove the notification entirely — losing the one channel that reaches
+ * somebody when no tab was opened, in exchange for a button. So ask first.
+ */
+function supportsAction(): boolean {
+  if (actionSupport !== null) return actionSupport;
+  try {
+    const help = spawnSync("notify-send", ["--help"], { encoding: "utf8", timeout: 2000 });
+    actionSupport = `${help.stdout}${help.stderr}`.includes("--action");
+  } catch {
+    actionSupport = false;
+  }
+  return actionSupport;
+}
+
+function notifyWithOpen(title: string, body: string, url: string): boolean {
+  if (process.platform !== "linux" || !supportsAction()) return false;
+  try {
+    const child = spawn(
+      "notify-send",
+      ["-a", "triago", "--wait", "--action=open=Open card", title, body],
+      { detached: true, stdio: ["ignore", "pipe", "ignore"] },
+    );
+    child.on("error", () => {});
+    child.stdout?.on("data", (chunk: Buffer) => {
+      if (chunk.toString().trim() === "open") openBrowser(url);
+    });
+    child.unref();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function notify(title: string, body: string, openUrl?: string): void {
   if (!loadConfig().notify) return;
+  if (openUrl && notifyWithOpen(title, body, openUrl)) return;
   if (process.platform === "darwin") {
     detached("osascript", ["-e", `display notification ${JSON.stringify(body)} with title ${JSON.stringify(title)}`]);
   } else {

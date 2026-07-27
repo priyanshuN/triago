@@ -6,7 +6,7 @@
  *   npm run build && npm test
  */
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
@@ -532,4 +532,46 @@ test("a parked wait is reported as a waiter, and receives the decisions", async 
 
   const woken = await (await parked).json();
   assert.equal(woken.tally.defer, 1, "and it woke with the decisions, not a timeout");
+});
+
+/**
+ * The counts that make silence visible.
+ *
+ * A card posted with no tab and a submission nobody was waiting for both look
+ * exactly like a working system from the outside — which is why they need
+ * counting rather than noticing. These run under TRIAGO_NO_BROWSER, so every
+ * card here is genuinely one nobody ever saw a tab for.
+ */
+test("status counts cards nobody opened and submissions nobody collected", async () => {
+  const status = () => JSON.parse(execFileSync(process.execPath, [CLI, "status", "--json"], { env, encoding: "utf8" }));
+  const before = status();
+  assert.ok(before.cards, "status should report card stats");
+
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+  ).json();
+
+  const mid = status();
+  assert.equal(mid.cards.total, before.cards.total + 1);
+  assert.equal(mid.cards.open, before.cards.open + 1);
+  assert.equal(
+    mid.cards.openUnseen,
+    before.cards.openUnseen + 1,
+    "a card posted with no tab is an unseen card",
+  );
+
+  await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
+    method: "POST",
+    headers: auth(),
+    body: JSON.stringify({ items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "skip" }] }),
+  });
+
+  const after = status();
+  assert.equal(after.cards.open, mid.cards.open - 1, "it is no longer open");
+  assert.equal(
+    after.cards.undelivered,
+    before.cards.undelivered + 1,
+    "submitted with nothing parked on it, so nothing collected it",
+  );
+  assert.equal(after.cards.openUnseen, before.cards.openUnseen, "and it stops counting as open-unseen");
 });

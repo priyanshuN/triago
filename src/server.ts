@@ -31,6 +31,8 @@ import {
   deleteCard,
   listCards,
   lookupCard,
+  markDelivered,
+  markOpened,
   readDecisions,
   submitDecisions,
 } from "./store.js";
@@ -224,7 +226,10 @@ export function buildApp(token: string, port: number): Hono {
     let shouldOpen = false;
     if (decision.open) {
       shouldOpen = openBrowser(`${url}#t=${token}`);
-      if (shouldOpen) writeState({ last_browser_open_at: Date.now() });
+      if (shouldOpen) {
+        writeState({ last_browser_open_at: Date.now() });
+        markOpened(card.id);
+      }
     }
     // Say why, every time. The reason travels back to whoever posted the card,
     // which for an MCP call is the agent — so when no tab appears the human is
@@ -243,6 +248,11 @@ export function buildApp(token: string, port: number): Hono {
       shouldOpen
         ? `triago · ${card.type} · ${items} item${items === 1 ? "" : "s"}`
         : `triago · ${items} item${items === 1 ? "" : "s"} · no tab opened — triago open ${card.id}`,
+      // Only offer the click when no tab was opened: that is the case where the
+      // notification is the only thing that reached anyone. It carries the token
+      // for the same reason `triago open` does — a card can hold source, so the
+      // browser has to prove it belongs to this user.
+      shouldOpen ? undefined : `${url}#t=${token}`,
     );
 
     return c.json(
@@ -318,6 +328,7 @@ export function buildApp(token: string, port: number): Hono {
     try {
       const record = submitDecisions(card, parsed.data);
       const delivered = wakeWaiters(card.id, record);
+      if (delivered > 0) markDelivered(card.id);
       broadcast({ type: "card.decided", id: card.id });
       const injected = tmuxInject(
         card.tmux_pane,

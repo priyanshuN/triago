@@ -200,3 +200,64 @@ export function submitDecisions(card: StoredCard, input: DecisionsInput): Decisi
   writeAtomic(path.join(cardDir(card.id), "card.json"), JSON.stringify(closed, null, 2));
   return record;
 }
+
+/**
+ * Two facts about a card that nothing else records, both about silence.
+ *
+ * A card can be posted, never open a tab, and sit unnoticed; decisions can be
+ * submitted with nothing listening and sit uncollected. Both are invisible in
+ * the moment — that is what makes them worth counting. They are marker files in
+ * the card's own directory rather than fields on the card, because the card is
+ * agent-authored content and this is not, and because deleting a card should
+ * take its bookkeeping with it.
+ */
+const MARKERS = { opened: "opened", delivered: "delivered" } as const;
+
+function mark(id: string, name: string): void {
+  try {
+    fs.writeFileSync(path.join(cardDir(id), name), "");
+  } catch {
+    /* bookkeeping must never break the thing it is counting */
+  }
+}
+
+function marked(id: string, name: string): boolean {
+  return fs.existsSync(path.join(cardDir(id), name));
+}
+
+/** A browser tab was actually opened for this card. */
+export function markOpened(id: string): void {
+  mark(id, MARKERS.opened);
+}
+
+/** Decisions were handed to something that was parked waiting for them. */
+export function markDelivered(id: string): void {
+  mark(id, MARKERS.delivered);
+}
+
+export type HomeStats = {
+  total: number;
+  open: number;
+  decided: number;
+  /** Open, and no tab was ever opened for it — nobody has necessarily seen it. */
+  openUnseen: number;
+  /** Decided, but nothing was waiting when it was submitted. */
+  undelivered: number;
+};
+
+export function homeStats(): HomeStats {
+  const stats: HomeStats = { total: 0, open: 0, decided: 0, openUnseen: 0, undelivered: 0 };
+  for (const id of listCardIds()) {
+    const card = readCard(id);
+    if (!card) continue;
+    stats.total++;
+    if (card.status === "open") {
+      stats.open++;
+      if (!marked(id, MARKERS.opened)) stats.openUnseen++;
+    } else {
+      stats.decided++;
+      if (!marked(id, MARKERS.delivered)) stats.undelivered++;
+    }
+  }
+  return stats;
+}

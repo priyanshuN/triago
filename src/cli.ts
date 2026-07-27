@@ -8,6 +8,7 @@ import { DEFAULT_PORT, DIST_DIR, TRIAGO_HOME, readToken } from "./paths.js";
 import { CardInput, DecisionsRecord, Finding, StoredCard } from "./schema.js";
 import { startServer } from "./server.js";
 import { openBrowser } from "./side.js";
+import { homeStats, lookupCard, markOpened } from "./store.js";
 
 const USAGE = `triago — decision surface for CLI agents
 
@@ -317,17 +318,26 @@ async function cmdOpen(args: Args): Promise<void> {
   const client = await ensureServer();
   const id = args._[1];
   const url = `${client.baseUrl}${id ? `/c/${id}` : ""}`;
-  openBrowser(`${url}#t=${client.token}`);
+  const opened = openBrowser(`${url}#t=${client.token}`);
+  // Opening it by hand is still someone seeing it, so it counts the same as an
+  // auto-open — otherwise `status` reports a card as unseen when it is the very
+  // one you are looking at.
+  if (opened && id) {
+    const found = lookupCard(id);
+    if (found.ok) markOpened(found.card.id);
+  }
   process.stderr.write(`triago: opened ${url}\n`);
 }
 
 async function cmdStatus(args: Args): Promise<void> {
   const health = await probe(DEFAULT_PORT);
+  const stats = homeStats();
   const payload = {
     running: Boolean(health),
     url: `http://127.0.0.1:${DEFAULT_PORT}`,
     home: TRIAGO_HOME,
     token: readToken() ? "present" : "missing",
+    cards: stats,
     ...(health ?? {}),
   };
   if (args.flags.json) {
@@ -339,6 +349,21 @@ async function cmdStatus(args: Args): Promise<void> {
       ? `triago up · pid ${health.pid} · v${health.version} · ${payload.url} · home ${health.home}\n`
       : `triago down · would listen on ${payload.url} · home ${TRIAGO_HOME}\n`,
   );
+
+  // The two counts worth surfacing are the silent ones. A card nobody opened and
+  // a submission nobody collected both look exactly like a working system until
+  // someone goes looking, which is the failure this whole line exists to catch.
+  if (stats.total) {
+    const notes = [
+      stats.openUnseen ? `${stats.openUnseen} never opened in a browser` : null,
+      stats.undelivered ? `${stats.undelivered} submitted with nothing waiting` : null,
+    ].filter(Boolean);
+    process.stdout.write(
+      `${stats.total} card${stats.total === 1 ? "" : "s"} · ${stats.open} open · ${stats.decided} decided` +
+        (notes.length ? `\n  ${notes.join("\n  ")}` : "") +
+        "\n",
+    );
+  }
 }
 
 async function cmdRm(args: Args): Promise<void> {
