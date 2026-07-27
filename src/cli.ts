@@ -294,8 +294,14 @@ async function cmdLs(args: Args): Promise<void> {
   }
   for (const c of filtered) {
     const state = c.status === "open" ? `${c.open_items}/${c.total_items} open` : "decided";
+    // Cards are stamped in UTC; the person reading the list is not.
+    const at = new Date(c.created_at).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
     process.stdout.write(
-      `${c.id}  ${c.created_at.slice(11, 16)}  ${(c.session ?? "-").padEnd(14)} ${c.type.padEnd(8)} ${state.padEnd(12)} ${c.title}\n`,
+      `${c.id}  ${at}  ${(c.session ?? "-").padEnd(14)} ${c.type.padEnd(8)} ${state.padEnd(12)} ${c.title}\n`,
     );
   }
 }
