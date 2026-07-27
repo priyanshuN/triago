@@ -34,14 +34,14 @@ npm i -g triago
 Requires Node 20 or newer. That puts both `triago` and `triago-mcp` on your PATH. `npx triago@latest demo`
 works too, if you would rather not install anything.
 
-> **Not published yet.** Until the first release, install from a checkout:
->
-> ```bash
-> git clone https://github.com/priyanshuN/triago && cd triago
-> npm install && npm run build
-> ln -s "$PWD/bin/triago" ~/.local/bin/triago
-> ln -s "$PWD/bin/triago-mcp" ~/.local/bin/triago-mcp
-> ```
+Or from a checkout, if you would rather read it first:
+
+```bash
+git clone https://github.com/priyanshuN/triago && cd triago
+npm install && npm run build
+ln -s "$PWD/bin/triago" ~/.local/bin/triago
+ln -s "$PWD/bin/triago-mcp" ~/.local/bin/triago-mcp
+```
 
 ## Quickstart
 
