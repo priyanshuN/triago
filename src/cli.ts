@@ -83,10 +83,20 @@ function gitBranch(from: string): string | null {
   for (let i = 0; i < 12; i++) {
     const dotGit = path.join(dir, ".git");
     try {
-      const stat = fs.statSync(dotGit);
+      // Read .git straight away rather than stat-ing it and then reading it. A
+      // worktree or submodule has a .git *file* pointing elsewhere, an ordinary
+      // repository has a directory, and attempting the read tells them apart (a
+      // directory fails with EISDIR) without the gap a stat-then-read leaves
+      // between deciding what the path is and acting on it.
       let gitDir = dotGit;
-      if (stat.isFile()) {
-        const pointer = fs.readFileSync(dotGit, "utf8").match(/gitdir:\s*(.+)/);
+      let pointerText: string | null = null;
+      try {
+        pointerText = fs.readFileSync(dotGit, "utf8");
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "EISDIR") throw err;
+      }
+      if (pointerText !== null) {
+        const pointer = pointerText.match(/gitdir:\s*(.+)/);
         if (!pointer) return null;
         gitDir = path.resolve(dir, pointer[1]!.trim());
       }

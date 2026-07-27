@@ -37,5 +37,7 @@ jobs:
           # security-extended adds lower-severity rules; on a codebase this size
           # the extra noise is affordable and the point is to catch things early.
           queries: security-extended
+          # Excludes exactly one rule, with the reasoning in the file itself.
+          config-file: ./.github/codeql/codeql-config.yml
 
       - uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4

@@ -1,0 +1,20 @@
+name: triago
+
+# One rule is excluded, deliberately and visibly — a dismissal in the Security
+# tab would hide the same decision somewhere nobody reviewing this repo would
+# look.
+#
+# js/file-access-to-http flags local file contents flowing into an outbound HTTP
+# request. That is the entire premise of triago: the CLI reads a findings file
+# and POSTs it to a server on 127.0.0.1, and the test suite does the same thing
+# forty-odd times to exercise the API. The rule fires on every one of those and
+# will keep firing, because the behaviour it describes is the feature.
+#
+# It is scoped to this single rule rather than to `paths-ignore: [test]`, so the
+# test suite is still analysed for everything else. If a future change ever
+# sends file contents somewhere that is *not* the loopback server, that is a
+# code review question, and SECURITY.md is where the loopback-only guarantee is
+# stated and where a reader should check it.
+query-filters:
+  - exclude:
+      id: js/file-access-to-http

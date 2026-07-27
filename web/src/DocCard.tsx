@@ -1,22 +1,33 @@
-import { marked } from "marked";
+import { Marked } from "marked";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { escapeHtml, isSafeHref } from "../../src/markdown";
 import type { DecisionsRecord, StoredDocCard } from "../../src/schema";
 import { api } from "./api";
 
 /**
- * Cards can quote arbitrary repo content, so rendered markdown is stripped of
- * anything executable before it reaches the DOM. The page's CSP (script-src
- * 'self') is the second line of defence.
+ * Cards can quote arbitrary repo content, so a card's markdown is untrusted.
+ * Rather than sanitise the HTML it produces — a blacklist, and the thing CodeQL
+ * flags — raw HTML is escaped into visible text and link targets are checked
+ * against a scheme allowlist. src/markdown.ts explains what that replaced and
+ * why. The page's CSP (script-src 'self') is still the second line of defence.
+ *
+ * A private Marked instance, so these rules cannot be undone by anything else
+ * importing marked later.
  */
-function sanitize(html: string): string {
-  return html
-    .replace(/<\s*(script|iframe|object|embed|link|meta|style)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
-    .replace(/<\s*(script|iframe|object|embed|link|meta|style)\b[^>]*>/gi, "")
-    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
-    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "")
-    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "")
-    .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1="#"');
-}
+const markdown = new Marked({ gfm: true, breaks: false });
+markdown.use({
+  renderer: {
+    // Every raw-HTML token, block-level and inline, arrives here.
+    html(token) {
+      return escapeHtml(typeof token === "string" ? token : token.text);
+    },
+  },
+  walkTokens(token) {
+    if ((token.type === "link" || token.type === "image") && !isSafeHref(token.href)) {
+      token.href = "#";
+    }
+  },
+});
 
 export function DocCard({
   card,
@@ -33,7 +44,7 @@ export function DocCard({
   const [submitting, setSubmitting] = useState(false);
   const locked = card.status === "decided" || decisions !== null;
   const html = useMemo(
-    () => sanitize(marked.parse(card.markdown, { async: false, gfm: true, breaks: false })),
+    () => markdown.parse(card.markdown, { async: false }),
     [card.markdown],
   );
 

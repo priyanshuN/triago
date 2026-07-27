@@ -22,10 +22,11 @@ files in their own `~/.triago`.
 
 **Not trusted:** the content of a card. A card arrives as JSON from an agent that
 may have read a hostile pull request, a dependency's README, or a web page. So
-finding text is data, never instruction: markdown is stripped of anything
-executable before it reaches the DOM, and a file path in a finding is resolved
-against `repo_roots` and refused if it escapes them. A card cannot make triago
-open `~/.ssh/id_rsa` by asking nicely.
+finding text is data, never instruction: a card's markdown may not introduce
+markup at all — raw HTML is escaped into visible text rather than sanitised, and
+link targets must carry a scheme on a short allowlist — and a file path in a
+finding is resolved against `repo_roots` and refused if it escapes them. A card
+cannot make triago open `~/.ssh/id_rsa` by asking nicely.
 
 **Also not trusted:** every other process and page on the machine. Localhost is
 not a security boundary by itself — any page in your browser can issue requests
@@ -39,7 +40,7 @@ to `127.0.0.1`, and any local process can connect to an open port.
 | API access | bearer token in `~/.triago/token`, mode 0600, compared with `timingSafeEqual` |
 | DNS rebinding | `Host` header checked against a localhost allowlist |
 | Token handover | passed once in the URL fragment, which browsers never send to a server |
-| Injected script | CSP `script-src 'self'`; rendered markdown sanitised |
+| Injected script | CSP `script-src 'self'`; card markdown cannot emit markup — raw HTML is escaped to text and link schemes are allowlisted |
 | Static file serving | path resolved then contained under the web directory, with a test for the traversal payloads |
 | Editor deep-link | argv array, never a shell string; off until enabled; path must resolve inside `repo_roots` |
 | tmux injection | off until enabled |
@@ -47,8 +48,9 @@ to `127.0.0.1`, and any local process can connect to an open port.
 | Telemetry | none. No analytics, no phone-home, nothing to opt out of |
 
 The controls in that table have regression tests: auth rejection, `Host`
-rejection, path traversal on the static route, and `repo_roots` containment on the
-editor link. They are asserted, not asserted-to.
+rejection, path traversal on the static route, `repo_roots` containment on the
+editor link, and every `javascript:` spelling that defeated the markdown
+sanitiser this replaced. They are asserted, not asserted-to.
 
 ## Supply chain
 
