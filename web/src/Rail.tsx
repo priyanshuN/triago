@@ -1,11 +1,9 @@
 import { useState } from "react";
+import { formatClock } from "../../src/format";
 import type { CardSummary } from "./api";
 import { setTheme, storedTheme, type Theme } from "./theme";
 
-/** Cards are stamped in UTC. Slicing the string showed everyone outside UTC
- *  somebody else's clock — 19:23 for a card decided at 00:53 in IST. */
-const timeOf = (iso: string): string =>
-  new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+const timeOf = formatClock;
 
 const THEMES: readonly { value: Theme; label: string }[] = [
   { value: "system", label: "auto" },

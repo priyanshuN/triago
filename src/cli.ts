@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { TriagoClient, ensureServer, probe, waitForDecisions } from "./client.js";
 import { loadConfig } from "./config.js";
+import { formatClock } from "./format.js";
 import { DEFAULT_PORT, DIST_DIR, TRIAGO_HOME, readToken } from "./paths.js";
 import { CardInput, DecisionsRecord, Finding, StoredCard } from "./schema.js";
 import { startServer } from "./server.js";
@@ -305,11 +306,7 @@ async function cmdLs(args: Args): Promise<void> {
   for (const c of filtered) {
     const state = c.status === "open" ? `${c.open_items}/${c.total_items} open` : "decided";
     // Cards are stamped in UTC; the person reading the list is not.
-    const at = new Date(c.created_at).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+    const at = formatClock(c.created_at);
     process.stdout.write(
       `${c.id}  ${at}  ${(c.session ?? "-").padEnd(14)} ${c.type.padEnd(8)} ${state.padEnd(12)} ${c.title}\n`,
     );
