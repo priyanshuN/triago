@@ -63,25 +63,57 @@ editor link. They are asserted, not asserted-to.
 - **`npm audit --omit=dev`** runs in CI on every push and prints the full report.
   It fails the build on a *critical* advisory rather than a high one — see below.
 
-### Known advisories that do not apply
+### The one advisory that is left, and why it cannot be fixed here
 
-`npm audit` on the shipped tree currently reports two. Both are real, neither is
-reachable in triago, and you deserve the reasoning rather than a reassurance:
+`npm audit --omit=dev` reports two entries. They are one advisory counted twice —
+the package, and the parent that depends on it:
 
-- **`@hono/node-server` — path traversal in `serve-static` on Windows via an
-  encoded backslash.** triago never imports `serveStatic`. It serves the frontend
-  itself, resolving the path first and then requiring the result to sit under the
-  web directory, so a decoded `\` fails that check on Windows too. The fix is a
-  semver-major bump and will be taken when the rest of the tree is ready for it.
-- **`@modelcontextprotocol/sdk` — cross-client data leak via a shared
-  server/transport instance.** That is a multi-client HTTP/SSE pattern. triago's
-  MCP adapter is stdio: one server instance, one client, one process, spawned by
-  the agent itself. There is also, at the time of writing, no fixed version to
-  move to — the advisory covers the current release.
+**`@hono/node-server` — path traversal in `serve-static` on Windows via an
+encoded backslash** ([GHSA-frvp-7c67-39w9]).
 
-This is why the CI gate sits at critical. A build that cannot be made green
-teaches a team to ignore it, and an advisory with no published fix would do
-exactly that. When a fix ships, Dependabot raises it and the gate moves up.
+triago's own copy is **not** affected: the direct dependency is on `2.x`, which
+is patched. What `npm audit` still sees is a *second, nested* copy:
+
+```
+node_modules/@modelcontextprotocol/sdk/node_modules/@hono/node-server
+```
+
+The MCP SDK pins `@hono/node-server: ^1.19.9`. Every published `1.x` is inside the
+advisory's range (`<2.0.5`) and no patched `1.x` exists, so that caret has nowhere
+safe to resolve. Nothing in this repository can move it — only the SDK can, by
+widening its range. `npm audit fix` will not clear it either; it loops.
+
+It is not reachable, and that is checkable rather than a promise:
+
+- triago never imports `serveStatic`. It serves the frontend itself, resolving
+  the path first and requiring the result to sit under the web directory, so a
+  decoded `\` fails that check on Windows too.
+- The only SDK files that reference `@hono/node-server` are `streamableHttp.*` —
+  its HTTP transport. triago's MCP adapter is **stdio**: one server, one client,
+  one process, spawned by the agent. The HTTP transport is never constructed.
+- The vulnerable module is therefore never loaded into the process at all:
+
+  ```sh
+  node --input-type=module -e '
+    await import("@modelcontextprotocol/sdk/server/mcp.js");
+    await import("@modelcontextprotocol/sdk/server/stdio.js");
+    console.log(process.moduleLoadList.filter(m => m.includes("hono")));
+  '
+  # => []
+  ```
+
+**A deliberate choice not to hide it.** An npm `overrides` entry would force `2.x`
+into the SDK and turn this audit green — but `overrides` only apply to the root
+project, so it would clear *this repository's* CI while every user who installs
+triago still resolved the nested `1.x`. A badge that only the maintainer can
+reproduce is worse than an honest number, so the number stays honest.
+
+This is also why the CI gate sits at *critical* rather than *moderate*: a build
+that cannot be made green teaches a team to ignore it. The full report prints on
+every run. When the SDK widens its range, Dependabot raises it and this section
+goes away.
+
+[GHSA-frvp-7c67-39w9]: https://github.com/advisories/GHSA-frvp-7c67-39w9
 
 ## What the badges do and do not say
 
