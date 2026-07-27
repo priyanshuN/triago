@@ -21,7 +21,12 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const HOME = fs.mkdtempSync(path.join(os.tmpdir(), "triago-test-"));
 // TRIAGO_NO_BROWSER is not optional here: without it every card posted by these
 // tests opens a real browser tab.
-const env = { ...process.env, TRIAGO_HOME: HOME, TRIAGO_PORT: String(PORT), TRIAGO_NO_BROWSER: "1" };
+const env = {
+  ...process.env,
+  TRIAGO_HOME: HOME,
+  TRIAGO_PORT: String(PORT),
+  TRIAGO_NO_BROWSER: "1",
+};
 
 let server;
 let token;
@@ -73,7 +78,11 @@ after(async () => {
 
 test("posting a card never opens a browser under TRIAGO_NO_BROWSER", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
   assert.equal(posted.opened_browser, false, "a test run must not spawn browser tabs");
 });
@@ -159,7 +168,11 @@ test("invalid cards are rejected with field detail", async () => {
 
 test("post → long-poll timeout → submit → decisions match, and re-submit is refused", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
   assert.match(posted.id, /^[0-9a-f]{8}$/);
 
@@ -204,7 +217,12 @@ test("post → long-poll timeout → submit → decisions match, and re-submit i
   const again = await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
     method: "POST",
     headers: auth(),
-    body: JSON.stringify({ items: [{ id: "f1", decision: "skip" }, { id: "f2", decision: "skip" }] }),
+    body: JSON.stringify({
+      items: [
+        { id: "f1", decision: "skip" },
+        { id: "f2", decision: "skip" },
+      ],
+    }),
   });
   assert.equal(again.status, 409);
 
@@ -216,7 +234,11 @@ test("post → long-poll timeout → submit → decisions match, and re-submit i
 
 test("a parked long-poll wakes up as soon as decisions land", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const started = Date.now();
@@ -226,7 +248,10 @@ test("a parked long-poll wakes up as soon as decisions land", async () => {
     method: "POST",
     headers: auth(),
     body: JSON.stringify({
-      items: [{ id: "f1", decision: "discuss" }, { id: "f2", decision: "skip" }],
+      items: [
+        { id: "f1", decision: "discuss" },
+        { id: "f2", decision: "skip" },
+      ],
     }),
   });
   const record = await (await parked).json();
@@ -237,7 +262,11 @@ test("a parked long-poll wakes up as soon as decisions land", async () => {
 
 test("deleting an open card needs force, and a decided one does not", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const refused = await fetch(`${BASE}/api/cards/${posted.id}`, {
@@ -251,7 +280,10 @@ test("deleting an open card needs force, and a decided one does not", async () =
     method: "POST",
     headers: auth(),
     body: JSON.stringify({
-      items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "skip" }],
+      items: [
+        { id: "f1", decision: "fix" },
+        { id: "f2", decision: "skip" },
+      ],
     }),
   });
 
@@ -263,7 +295,11 @@ test("deleting an open card needs force, and a decided one does not", async () =
 
 test("deleting a card out from under a parked wait wakes it with 410, not a timeout", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const started = Date.now();
@@ -280,7 +316,11 @@ test("deleting a card out from under a parked wait wakes it with 410, not a time
 
 test("`triago wait` blocks, prints the decisions JSON and exits 0", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const wait = spawn(process.execPath, [CLI, "wait", posted.id, "--timeout", "30"], { env });
@@ -295,7 +335,10 @@ test("`triago wait` blocks, prints the decisions JSON and exits 0", async () => 
     method: "POST",
     headers: auth(),
     body: JSON.stringify({
-      items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "fix" }],
+      items: [
+        { id: "f1", decision: "fix" },
+        { id: "f2", decision: "fix" },
+      ],
     }),
   });
 
@@ -307,7 +350,11 @@ test("`triago wait` blocks, prints the decisions JSON and exits 0", async () => 
 
 test("`triago wait` on an undecided card exits 3 so the agent can walk away", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
   const wait = spawn(process.execPath, [CLI, "wait", posted.id, "--timeout", "1"], { env });
   const code = await new Promise((resolve) => wait.on("exit", resolve));
@@ -337,7 +384,11 @@ test("id prefixes resolve, unknown ids 404", async () => {
 
 test("defer is its own decision, distinct from skip, and round-trips to disk", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
   const res = await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
     method: "POST",
@@ -395,13 +446,20 @@ test("the SSE stream pushes card.created and card.decided", async () => {
   })();
 
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
   await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
     method: "POST",
     headers: auth(),
     body: JSON.stringify({
-      items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "skip" }],
+      items: [
+        { id: "f1", decision: "fix" },
+        { id: "f2", decision: "skip" },
+      ],
     }),
   });
 
@@ -483,7 +541,11 @@ test("editor deep-links stay off until the user opts in", async () => {
  */
 test("a card nothing is parked on does not report a waiter", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const detail = await (await fetch(`${BASE}/api/cards/${posted.id}`, { headers: auth() })).json();
@@ -496,25 +558,40 @@ test("a card nothing is parked on does not report a waiter", async () => {
 
 test("submitting with nobody parked reports delivered:false", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const res = await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
     method: "POST",
     headers: auth(),
-    body: JSON.stringify({ items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "skip" }] }),
+    body: JSON.stringify({
+      items: [
+        { id: "f1", decision: "fix" },
+        { id: "f2", decision: "skip" },
+      ],
+    }),
   });
   const body = await res.json();
   assert.equal(res.status, 200);
   assert.equal(body.delivered, false, "nothing was listening, so nothing was delivered");
   // The decisions still exist — not delivered is not the same as lost.
-  const after = await (await fetch(`${BASE}/api/cards/${posted.id}/decisions`, { headers: auth() })).json();
+  const after = await (
+    await fetch(`${BASE}/api/cards/${posted.id}/decisions`, { headers: auth() })
+  ).json();
   assert.equal(after.tally.fix, 1);
 });
 
 test("a parked wait is reported as a waiter, and receives the decisions", async () => {
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const parked = fetch(`${BASE}/api/cards/${posted.id}/decisions?wait=30`, { headers: auth() });
@@ -526,7 +603,12 @@ test("a parked wait is reported as a waiter, and receives the decisions", async 
   const res = await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
     method: "POST",
     headers: auth(),
-    body: JSON.stringify({ items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "defer" }] }),
+    body: JSON.stringify({
+      items: [
+        { id: "f1", decision: "fix" },
+        { id: "f2", decision: "defer" },
+      ],
+    }),
   });
   assert.equal((await res.json()).delivered, true, "the parked call was handed the record");
 
@@ -543,12 +625,19 @@ test("a parked wait is reported as a waiter, and receives the decisions", async 
  * card here is genuinely one nobody ever saw a tab for.
  */
 test("status counts cards nobody opened and submissions nobody collected", async () => {
-  const status = () => JSON.parse(execFileSync(process.execPath, [CLI, "status", "--json"], { env, encoding: "utf8" }));
+  const status = () =>
+    JSON.parse(
+      execFileSync(process.execPath, [CLI, "status", "--json"], { env, encoding: "utf8" }),
+    );
   const before = status();
   assert.ok(before.cards, "status should report card stats");
 
   const posted = await (
-    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
   ).json();
 
   const mid = status();
@@ -563,7 +652,12 @@ test("status counts cards nobody opened and submissions nobody collected", async
   await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
     method: "POST",
     headers: auth(),
-    body: JSON.stringify({ items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "skip" }] }),
+    body: JSON.stringify({
+      items: [
+        { id: "f1", decision: "fix" },
+        { id: "f2", decision: "skip" },
+      ],
+    }),
   });
 
   const after = status();
@@ -573,5 +667,24 @@ test("status counts cards nobody opened and submissions nobody collected", async
     before.cards.undelivered + 1,
     "submitted with nothing parked on it, so nothing collected it",
   );
-  assert.equal(after.cards.openUnseen, before.cards.openUnseen, "and it stops counting as open-unseen");
+  assert.equal(
+    after.cards.openUnseen,
+    before.cards.openUnseen,
+    "and it stops counting as open-unseen",
+  );
+});
+
+/**
+ * The bug report template asks for `triago --version` as its first required
+ * field, so every spelling somebody will reach for has to answer. `--version`
+ * is the one that needs a test: parseArgs routes anything starting with `--`
+ * into flags, so it never reaches the command switch and is easy to break by
+ * touching the dispatcher.
+ */
+test("--version prints the package version, however it is spelled", () => {
+  const expected = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
+  for (const argv of [["--version"], ["-v"], ["version"]]) {
+    const out = execFileSync(process.execPath, [CLI, ...argv], { env, encoding: "utf8" });
+    assert.equal(out.trim(), expected, `\`triago ${argv.join(" ")}\` should print ${expected}`);
+  }
 });

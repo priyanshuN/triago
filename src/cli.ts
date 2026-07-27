@@ -4,7 +4,7 @@ import path from "node:path";
 import { TriagoClient, ensureServer, probe, waitForDecisions } from "./client.js";
 import { loadConfig } from "./config.js";
 import { formatClock } from "./format.js";
-import { DEFAULT_PORT, DIST_DIR, TRIAGO_HOME, readToken } from "./paths.js";
+import { DEFAULT_PORT, DIST_DIR, TRIAGO_HOME, readToken, version } from "./paths.js";
 import { CardInput, DecisionsRecord, Finding, StoredCard } from "./schema.js";
 import { startServer } from "./server.js";
 import { openBrowser } from "./side.js";
@@ -25,6 +25,7 @@ const USAGE = `triago — decision surface for CLI agents
   triago stop                     shut the server down
   triago token                    print the API token
   triago serve                    run the server in the foreground
+  triago --version                print the version and exit
 
 Common flags
   --title <t>       card title            --session <k>  session key (default: git branch)
@@ -190,9 +191,7 @@ async function cmdFindings(args: Args): Promise<void> {
     (f) => typeof f === "object" && f !== null && "severity" in (f as object),
   );
   const groupBy = (str(args.flags["group-by"]) ?? (anySeverity ? "severity" : "none")) as
-    | "severity"
-    | "repo"
-    | "none";
+    "severity" | "repo" | "none";
   const source =
     str(args.flags.source) ?? (typeof asObject.source === "string" ? asObject.source : undefined);
 
@@ -233,8 +232,7 @@ async function cmdDoc(args: Args): Promise<void> {
     type: "doc",
     ...cardContext(args),
     ...(str(args.flags.source) ? { source: str(args.flags.source)! } : {}),
-    title:
-      str(args.flags.title) ?? heading?.[1]?.trim() ?? path.basename(args._[1] ?? "document"),
+    title: str(args.flags.title) ?? heading?.[1]?.trim() ?? path.basename(args._[1] ?? "document"),
     markdown,
     ...(str(args.flags["ack-label"]) ? { ack_label: str(args.flags["ack-label"])! } : {}),
   };
@@ -396,7 +394,8 @@ async function cmdPrune(args: Args): Promise<void> {
   const { cards } = await client.listCards(str(args.flags.session));
   const includeOpen = Boolean(args.flags["include-open"]);
   const olderThan = Number(str(args.flags["older-than"]) ?? "");
-  const cutoff = Number.isFinite(olderThan) && olderThan > 0 ? Date.now() - olderThan * 86400_000 : null;
+  const cutoff =
+    Number.isFinite(olderThan) && olderThan > 0 ? Date.now() - olderThan * 86400_000 : null;
 
   const doomed = cards.filter((c) => {
     if (c.status !== "decided" && !includeOpen) return false;
@@ -438,6 +437,13 @@ async function cmdStop(): Promise<void> {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const cmd = args._[0] ?? "help";
+  // Handled before the switch because `--version` never reaches `_` — parseArgs
+  // routes anything starting with `--` into flags. The bug report template asks
+  // for this first, so it has to work in every spelling somebody will try.
+  if (args.flags.version || cmd === "version" || cmd === "-v" || cmd === "-V") {
+    process.stdout.write(`${version()}\n`);
+    return;
+  }
   switch (cmd) {
     case "findings":
       return cmdFindings(args);
