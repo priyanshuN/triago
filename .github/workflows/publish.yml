@@ -5,6 +5,12 @@ name: publish
 # the exact public commit and workflow that produced it. For a tool that asks
 # people to run a local server holding a token, "trust me, I built it" is a
 # weaker claim than a signed one.
+#
+# There is no npm credential in this repository. The registry is configured to
+# trust this workflow, by filename, in this repository (npm "trusted publishing"),
+# and authenticates it with a short-lived OIDC token minted per run by the
+# id-token permission below. Nothing to rotate, nothing to expire, and nothing a
+# leaked repository secret could be used to publish with.
 
 on:
   release:
@@ -18,7 +24,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # required for --provenance
+  id-token: write # mints the OIDC token: both the registry auth and the provenance
 
 jobs:
   publish:
@@ -58,11 +64,14 @@ jobs:
             process.exit(1);
           }"
 
+      # No NODE_AUTH_TOKEN: authentication is the OIDC token minted above. A
+      # stored token would take precedence over it, so its absence is what keeps
+      # this on the trusted-publishing path rather than a credential that can
+      # leak or expire. --access public is still required: scoped packages
+      # default to restricted, which a free account cannot publish.
       - name: Publish with provenance
         if: github.event_name == 'release' || inputs.publish
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Rehearsal only — nothing was published
         if: github.event_name == 'workflow_dispatch' && !inputs.publish

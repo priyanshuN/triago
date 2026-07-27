@@ -55,26 +55,36 @@ workflow, then confirm the install path a stranger will actually use:
 npx @triago/cli@latest demo
 ```
 
-## After the first release: drop the token
+## There is no npm credential in this repository
 
-npm supports **trusted publishing** — the workflow authenticates with a
-short-lived OIDC credential instead of a stored token, so there is nothing to
-rotate and nothing that can leak from repository secrets.
+Releases authenticate by **trusted publishing**: npm trusts this workflow, by
+filename, in this repository, and GitHub mints a short-lived OIDC token for each
+run. Nothing is stored, so nothing expires, rotates, or leaks. `NPM_TOKEN` was
+deleted after 0.1.1 and the token revoked.
 
-The configuration lives on the package's own page, so it can only be set up once
-the package exists — hence the token for release one, then:
+That is also why `publish.yml` sets no `NODE_AUTH_TOKEN`: a stored token takes
+precedence over OIDC, so its *absence* is what keeps releases on the trusted
+path. If you ever add one back, you have quietly turned this off.
 
-1. npmjs.com → the package → **Settings** → **Trusted Publisher** → GitHub Actions.
-2. Fill in the organisation/user (`priyanshuN`), the repository (`triago`) and
-   the workflow filename (`publish.yml`).
-3. Delete the `NPM_TOKEN` repository secret and revoke the token on npmjs.com.
-   Do this promptly rather than eventually: as step 3 above explains, that token
-   is authorised for every package on the account, not just this one.
+Two settings hold it in place, both on the package page:
 
-The workflow already meets the requirements: it sets `id-token: write`, and Node
-24 ships npm 11.13, comfortably past the 11.5.1 minimum. Provenance becomes
-automatic under trusted publishing, so the `--provenance` flag is redundant from
-then on — harmless to leave, but it can go.
+- **Trusted Publisher** → GitHub Actions → `priyanshuN` / `triago` /
+  `publish.yml`, permission `npm publish`. **Environment name must be empty** —
+  the workflow declares no GitHub Actions environment, and a value here would not
+  match the claim the workflow presents, rejecting every publish.
+- **Publishing access** → *Require two-factor authentication and disallow
+  tokens*. Trusted publishers keep working under it, so this costs nothing and
+  means a stolen token cannot publish this package at all. Interactive publishing
+  with 2FA still works if you ever need to break glass.
+
+The requirements are already met: `id-token: write`, Node 24, npm 11.13 (past the
+11.5.1 minimum). `--access public` must stay — scoped packages default to
+restricted, which a free account cannot publish.
+
+**Rehearsals cannot prove any of this.** Running the workflow with `publish` off
+skips the publish step entirely, so it never touches authentication. The first
+real release after a change here is the proof; if it fails on auth, re-add a
+scoped token as a stopgap rather than debugging under pressure.
 
 ## Recording screenshots and demos
 
