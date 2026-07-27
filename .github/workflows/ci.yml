@@ -14,8 +14,8 @@ jobs:
         # The runtime floor is engines >=20; 24 is what development happens on.
         node: ["20", "22", "24"]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: npm
