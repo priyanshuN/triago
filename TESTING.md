@@ -176,18 +176,53 @@ The last one only works with curl, not `fetch` — the fetch spec forbids settin
 
 ## 9. Theme and layout
 
-The page follows your OS theme; both are designed, so check the one you do not
-normally use. Narrow the window below 860px and the rail collapses. Zoom to 150%
-and the row layout should hold — long summaries ellipsis rather than wrap.
+The rail footer offers auto / light / dark. Auto follows the OS, and the check
+that actually matters is the override: set the OS to dark, pick **light**, and the
+page must go light *and stay light through a reload*. Both palettes are designed,
+so spend a minute in the one you do not normally use.
+
+Narrow the window: below 1200px the card header wraps to two rows and keeps the
+title whole, and below 860px the rail collapses. Zoom to 150% and the row layout
+should hold — long summaries ellipsis rather than wrap.
+
+## 10. A submitted card is frozen, and deleting one is not silent
+
+Submit a card and try to change it. The decision buttons should be *gone* rather
+than greyed out, a note you left should read as prose, and the keybar should offer
+navigation only. Reload — it stays decided.
+
+Then the delete path, which has a contract worth seeing work. In the rail, the ×
+on a decided card asks once and removes it; on an open card it warns first,
+because an agent may be parked on that card. Prove the parked case:
+
+```bash
+triago findings review.json --wait 120
+```
+
+Leave that blocked, and from another shell:
+
+```bash
+triago rm <id>
+```
+
+It must refuse — the card is still open. Then force it:
+
+```bash
+triago rm <id> --force
+```
+
+The blocked command should exit within a second or two saying the card is gone,
+**not** sit out the remaining two minutes. That is the whole point of the 410.
 
 ---
 
 ## Cleaning up after a session
 
 ```bash
-triago ls                          # what you have
-rm -rf ~/.triago/cards/<id>        # drop a card
-triago stop                        # and the server, if you want it gone
+triago ls                     # what you have
+triago rm <id>                # drop one
+triago prune                  # every decided card (dry run; --yes to commit)
+triago stop                   # and the server, if you want it gone
 ```
 
 Cards are only files. Deleting `~/.triago` entirely resets triago to first-run state,

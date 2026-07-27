@@ -95,6 +95,17 @@ that size: a 300-finding card is a 197KB payload that fetches in ~27ms and 2,500
 DOM nodes, with a decision dispatching in 0.7ms and twenty navigation keystrokes
 in 1.2ms.
 
+The rail keeps **Waiting** above **Done**, newest first, so whatever still owes
+you an answer is at the top; older decided cards fold behind a toggle. Each row
+carries a delete control, times are shown on your own clock, and the footer has a
+light / dark / auto theme switch — auto follows the OS, and an explicit choice
+overrides it in both directions.
+
+Submitting freezes a card. The decisions were handed to an agent that may have
+acted on them already, so a record that could change afterwards would be a record
+that disagrees with what happened: the decision buttons go, your notes stay
+visible as prose, and the server refuses a second submission.
+
 ## Keyboard
 
 | | |
@@ -144,11 +155,20 @@ triago wait <id>                block until submitted (exit 0 + JSON, exit 3 on 
 triago show <id>                print a card and its decisions
 triago ls                       list cards
 triago open [id]                open the browser surface (hands the token over)
+triago rm <id…>                 delete cards
+triago prune                    bulk delete — prints the list, --yes to do it
 triago status | triago stop        server state / shut it down
 ```
 
 Flags: `--title`, `--source`, `--session`, `--group-by severity|repo|none`,
-`--wait [secs]`, `--timeout <secs>`, `--json`, `--ack-label`.
+`--wait [secs]`, `--timeout <secs>`, `--json`, `--ack-label`. `prune` also takes
+`--older-than <days>`, `--session <k>`, `--include-open` and `--yes`.
+
+Deleting an open card takes `--force`, because an agent may be parked on it.
+Rather than leave that call hanging until its own timeout, the server wakes it
+with a `410` so it exits knowing the card is gone. `prune` is a dry run until you
+add `--yes` — there is no undo, and the alternative is learning the flags by
+destroying something.
 
 **Four ways the answer gets back**, in the order you should reach for them:
 
@@ -207,8 +227,18 @@ opencode, a Makefile, or a shell script with no integration at all.
 
 ### Telling the agent when to use it
 
-Add a rule to whatever instruction file your agent reads (`CLAUDE.md`,
-`AGENTS.md`, a system prompt). Something like:
+**If your agent speaks MCP, you don't have to.** The server hands the client an
+`instructions` block that reaches the model before it sees a single tool call:
+when a card is warranted (more than about five findings, or a document past ~80
+lines), when to stay in the terminal, what each of the four decisions obliges it
+to do, and what to do if posting fails or the call times out. That policy ships
+with the install instead of living in your config, so triago behaves the same on
+a machine that has never heard of it.
+
+Agents that only run shell commands never see that block. For those — or to state
+the policy explicitly in a repo where you want it written down — add a rule to
+whatever instruction file the agent reads (`CLAUDE.md`, `AGENTS.md`, a system
+prompt). Something like:
 
 > Findings lists longer than five items, or judgment documents over ~80 lines, go
 > to a triago card (`triago findings <file> --wait`, or `triago_post_findings`) instead of

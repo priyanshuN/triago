@@ -228,6 +228,40 @@ example.
 It runs on Node 20, 22 and 24 in CI. The runtime floor is `engines >=20`;
 development happens on the current LTS.
 
+## The policy belongs to the server, not to your config
+
+For its first week the rule that decides *when* an agent posts a card — over
+about five findings, over roughly 80 lines of judgment document — lived in the
+author's own `CLAUDE.md`. It worked beautifully, and that was the problem: every
+successful test was a test of that file, not of the tool. An agent on a fresh
+install saw one vague clause in a tool description and would keep printing to the
+terminal, and the person who installed it would have no way to know why.
+
+MCP lets a server hand the client an `instructions` block that reaches the model
+before it sees a single tool call, so that is where the policy now lives: the
+threshold, the cases that should stay in the terminal, what each decision obliges
+the agent to do, and what to do when a post fails. An instruction-file rule is
+reinforcement for agents that only run shell commands, not the mechanism.
+
+The same reasoning applies inside the descriptions. `defer` was added to the
+schema after the findings tool description was written, so for a week the only
+text an agent read about this tool said there were three decisions. The verb list
+is now joined from the schema's own array and asserted by tests, because a
+hand-maintained copy of a list that lives somewhere else will drift again.
+
+## Deleting a card is a message to whoever is waiting
+
+Cards are files, so deletion could have been `rm -rf` and a refreshed list. The
+part that needed designing was the agent parked on the card being deleted: a
+long-poll that simply found its card missing would sit there until its own
+timeout, and report a nine-minute wait as a human being slow.
+
+So deletion is a distinct outcome rather than an absence. An open card refuses to
+delete without force; when forced, the waiters are woken with a `410` and the
+blocked call exits saying the card is gone. `prune` is a dry run until `--yes`,
+for the same reason a destructive command should never be the one you learn the
+flags on.
+
 ## Deliberately not built
 
 - **questions** and **draft** cards — the same card mechanics applied to option
