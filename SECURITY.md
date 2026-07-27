@@ -60,6 +60,10 @@ editor link. They are asserted, not asserted-to.
   `@modelcontextprotocol/sdk`, `zod`), 94 transitive. Small enough to read.
 - **Dependabot** watches npm and GitHub Actions. Actions matter as much as
   dependencies here, because the publish workflow holds the npm credential.
+- **Actions are pinned to commit SHAs**, not tags. A tag is a mutable pointer:
+  whoever controls an action's repository can move `v7` onto different code, and
+  that code would run in the workflow holding the npm token. A SHA cannot be
+  moved. The trailing `# v7` is a comment for humans — Dependabot updates both.
 - **`npm audit --omit=dev`** runs in CI on every push and prints the full report.
   It fails the build on a *critical* advisory rather than a high one — see below.
 

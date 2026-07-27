@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
 
+# This workflow only reads the code. Saying so explicitly means a compromised
+# dependency running inside a test cannot use the job's token to write to the
+# repository — without this line the token carries whatever the repository
+# default happens to be, which is not a decision anyone made per-workflow.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,8 +21,8 @@ jobs:
         # The runtime floor is engines >=20; 24 is what development happens on.
         node: ["20", "22", "24"]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: ${{ matrix.node }}
           cache: npm
