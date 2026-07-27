@@ -30,13 +30,17 @@ body:
     attributes:
       label: How was triago invoked
       description: The CLI and the MCP adapter fail in different places.
+      # "Not sure" is first because GitHub pre-selects the first option rather
+      # than leaving the control empty. Whatever sits here is what an untouched
+      # form submits, so it has to be the answer that asserts nothing — leading
+      # with "CLI" would have filed confident wrong answers for every MCP bug.
       options:
+        - Not sure
         - CLI (triago …)
         - MCP, from Claude Code
         - MCP, from Codex
         - MCP, from another client
         - The browser interface itself
-        - Not sure
     validations:
       required: true
 
@@ -61,8 +65,10 @@ body:
   - type: textarea
     id: status
     attributes:
-      label: Output of `triago status`
-      description: Says whether the server is up, which version is serving, and what it can see on disk. Automatically formatted as code.
+      # No backticks: a field label is plain text and would show them literally.
+      # Descriptions do render markdown, which is why the ones below use it.
+      label: Output of triago status
+      description: "`triago status` says whether the server is up, which version is serving, and what it can see on disk. Automatically formatted as code."
       render: text
       placeholder: |
         triago up · pid 21877 · v0.2.0 · http://127.0.0.1:5599 · home /home/you/.triago

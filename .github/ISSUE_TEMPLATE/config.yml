@@ -1,8 +1,9 @@
 blank_issues_enabled: false
+# No security entry here. GitHub injects one of its own whenever SECURITY.md
+# exists, pointing at the policy — adding a second link to the advisory form put
+# two near-identical security rows on the chooser, which reads as a mistake and
+# makes neither obviously the right one.
 contact_links:
   - name: Question, or not sure it's a bug
     url: https://github.com/priyanshuN/triago/discussions
     about: Discussions. Wiring an agent up, whether something is expected, anything you'd rather ask than file.
-  - name: Security vulnerability
-    url: https://github.com/priyanshuN/triago/security/advisories/new
-    about: Report privately, never as an issue. SECURITY.md states the threat model and what is in scope.
