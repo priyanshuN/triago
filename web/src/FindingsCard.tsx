@@ -62,6 +62,36 @@ function initialDraft(card: StoredFindingsCard, decisions: DecisionsRecord | nul
   );
 }
 
+/**
+ * A command the reader is meant to run elsewhere, with one click to take it.
+ * Retyping a card id by eye is exactly the friction that makes people give up
+ * and leave the decisions stranded on disk.
+ */
+function CopyLine({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="copy-line mono"
+      title="copy"
+      onClick={() => {
+        void navigator.clipboard?.writeText(text).then(
+          () => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1400);
+          },
+          () => {
+            /* clipboard blocked — the text is selectable either way */
+          },
+        );
+      }}
+    >
+      <span>{text}</span>
+      <span className="copy-hint">{copied ? "copied" : "copy"}</span>
+    </button>
+  );
+}
+
 function FixBlock({ text }: { text: string }) {
   const lines = text.replace(/\n+$/, "").split("\n");
   const isDiff = lines.some((l) => /^[+-]/.test(l));
@@ -104,6 +134,12 @@ export function FindingsCard({
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState(decisions?.global_comment ?? "");
   const [submitting, setSubmitting] = useState(false);
+  /**
+   * Did anything actually receive the decisions? Only known for a submit made
+   * in this tab — `null` on a card that was already decided when it loaded,
+   * where the page cannot know and should not guess.
+   */
+  const [delivered, setDelivered] = useState<boolean | null>(null);
   const locked = card.status === "decided" || decisions !== null;
   // The keydown listener is attached once, so its captured `submitting` would be
   // stale: a fast double ctrl+Enter must not send the decisions twice.
@@ -244,7 +280,7 @@ export function FindingsCard({
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const { decisions: record, tmux_injected } = await api.submit(card.id, {
+      const { decisions: record, tmux_injected, delivered } = await api.submit(card.id, {
         items: card.findings.map((f) => ({
           id: f.id,
           decision: current[f.id]!.decision!,
@@ -253,7 +289,14 @@ export function FindingsCard({
         ...(noteRef.current.trim() ? { global_comment: noteRef.current.trim() } : {}),
       });
       onSubmitted(record);
-      toast(tmux_injected ? "decisions returned — agent poked in tmux" : "decisions returned — agent resumed");
+      setDelivered(delivered !== false);
+      toast(
+        tmux_injected
+          ? "decisions returned — agent poked in tmux"
+          : delivered === false
+            ? "decisions saved — no agent was waiting"
+            : "decisions returned — agent resumed",
+      );
     } catch (err) {
       toast(err instanceof Error ? err.message : "submit failed");
       submittingRef.current = false;
@@ -405,7 +448,7 @@ export function FindingsCard({
                   }}
                   className={`row${index === focus ? " focused" : ""}${
                     decision ? ` decided-${decision}` : ""
-                  }`}
+                  }${isOpen ? " is-open" : ""}`}
                   style={{ ["--sev" as string]: SEV_META[finding.severity]?.color }}
                 >
                   <div
@@ -416,7 +459,13 @@ export function FindingsCard({
                     }}
                   >
                     <div className="row-summary">
-                      <span className="txt" title={finding.summary}>
+                      {/* The tooltip is a crutch for the collapsed row, where the
+                          summary is clipped to one line so the list stays
+                          scannable. Once the row is open it is actively harmful:
+                          the native tooltip renders over the detail underneath,
+                          hiding the very text the reader opened the row to see.
+                          Open rows show the summary in full instead. */}
+                      <span className="txt" title={isOpen ? undefined : finding.summary}>
                         {finding.summary}
                       </span>
                       {short && (
@@ -568,11 +617,28 @@ export function FindingsCard({
 
         {decisions && (
           <div className="returned" ref={returnedRef}>
-            <div className="r-title">✓ Decisions returned to agent</div>
-            <div className="r-sub">
-              Exactly what the agent gets for <span className="mono">{card.id}</span> — the blocked
-              call if one was waiting, otherwise the next read.
+            <div className="r-title">
+              {delivered === false ? "✓ Decisions saved" : "✓ Decisions returned to agent"}
             </div>
+            {delivered === false ? (
+              /* The normal ending, not the sad one: a real triage takes longer
+                 than the call that posted the card, so the agent has usually
+                 stopped listening by now. Nothing is lost — the decisions are on
+                 disk — but somebody has to go and collect them, and that is the
+                 one thing this page can say and the agent cannot. */
+              <div className="r-sub">
+                Nothing was waiting — the call that posted this card had already ended. The decisions
+                are saved. Ask your agent to pick them up, in this session or a new one:
+                <CopyLine text={`triago show ${card.id}`} />
+                An agent with the MCP server can fetch them itself — tell it to read the decisions
+                for card <span className="mono">{card.id}</span>.
+              </div>
+            ) : (
+              <div className="r-sub">
+                Exactly what the agent gets for <span className="mono">{card.id}</span> — the blocked
+                call if one was waiting, otherwise the next read.
+              </div>
+            )}
             <pre>{JSON.stringify(decisions, null, 2)}</pre>
           </div>
         )}

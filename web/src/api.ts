@@ -58,12 +58,17 @@ export const api = {
     req<{ cards: CardSummary[] }>(
       `/api/cards${session ? `?session=${encodeURIComponent(session)}` : ""}`,
     ),
-  card: (id: string) => req<{ card: StoredCard; decisions: DecisionsRecord | null }>(`/api/cards/${id}`),
+  card: (id: string) =>
+    req<{ card: StoredCard; decisions: DecisionsRecord | null; waiting?: boolean }>(
+      `/api/cards/${id}`,
+    ),
   submit: (id: string, body: DecisionsInput) =>
-    req<{ decisions: DecisionsRecord; tmux_injected: boolean }>(`/api/cards/${id}/decisions`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    // `delivered` false means the decisions were written but nothing was
+    // listening — the agent has to be told to come back for them.
+    req<{ decisions: DecisionsRecord; tmux_injected: boolean; delivered?: boolean }>(
+      `/api/cards/${id}/decisions`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
   openInEditor: (body: { repo?: string; file: string; line?: number }) =>
     req<{ opened: boolean; reason?: string; resolved?: string }>("/api/open", {
       method: "POST",

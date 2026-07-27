@@ -43,7 +43,13 @@ export function Rail({
   const doneShown = showAll ? done : done.slice(0, RECENT_DONE);
   const hidden = done.length - doneShown.length;
 
-  const waitingOn = waiting.find((c) => c.id === currentId) ?? waiting[0];
+  // An *open* card and a card something is *waiting on* are different things,
+  // and the footer used to conflate them — claiming "agent waiting" for any
+  // open card, including ones whose agent gave up hours ago. A real triage
+  // outlasts the call that posted the card, so that reading was usually wrong
+  // precisely when it mattered: it hid the fact that nobody was listening.
+  const blocked = waiting.filter((c) => c.waiting);
+  const blockedOn = blocked.find((c) => c.id === currentId) ?? blocked[0];
 
   const item = (c: CardSummary) => (
     <div
@@ -137,10 +143,15 @@ export function Rail({
       </div>
 
       <div className="rail-foot">
-        {waitingOn ? (
+        {blockedOn ? (
           <>
-            agent waiting on <span className="mono">triago wait {waitingOn.id}</span>
-            {waiting.length > 1 && ` · ${waiting.length - 1} more`}
+            agent waiting on <span className="mono">triago wait {blockedOn.id}</span>
+            {blocked.length > 1 && ` · ${blocked.length - 1} more`}
+            <br />
+          </>
+        ) : waiting.length > 0 ? (
+          <>
+            {waiting.length} open · no agent waiting
             <br />
           </>
         ) : (

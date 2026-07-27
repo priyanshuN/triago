@@ -482,14 +482,24 @@ button {
   flex-wrap: nowrap;
   background: var(--ground);
 }
+/* Wraps to two lines rather than ellipsing to a stub. This was nowrap on the
+   theory that the rail carried the title in full, so the header could afford to
+   lose characters — but a real one ("Code review (ultra) — SED-5406 branch
+   diff, 3 repos") was ground down to a few words, and reading it needed a
+   hover. The title is what tells you what you are looking at; it should not sit
+   behind an interaction. The controls keep flex-shrink: 0, so the row grows
+   downward instead and Submit still never orphans onto a line of its own. */
 .card-title {
   font-size: var(--fs-lg);
   font-weight: 600;
   letter-spacing: -0.01em;
   min-width: 3ch;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .card-head .chip,
 .card-head .tally,
@@ -499,14 +509,18 @@ button {
 }
 /* The single row only works while there is genuinely room for it. The tally and
    Submit want ~840px on their own, so below this the title was being ground
-   down to an initial and an ellipsis — worse than the wrap it replaced. Here
-   the row wraps instead, and the title survives whole. */
-@media (max-width: 1200px) {
+   down — first to an ellipsis, and later to a two-line clamp that still cut a
+   real title off at 1250px. Here the row wraps instead and the title takes the
+   full width uncut, which is worth more than keeping everything on one line.
+   The threshold is set from a genuine title rather than a short one: "Code
+   review (ultra) — SED-5406 branch diff, 3 repos" is the case to survive. */
+@media (max-width: 1440px) {
   .card-head {
     flex-wrap: wrap;
   }
   .card-title {
-    white-space: normal;
+    -webkit-line-clamp: none;
+    line-clamp: none;
     overflow: visible;
   }
 }
@@ -682,6 +696,17 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* One line while collapsed keeps the list scannable — a column of equal rows is
+   what makes twelve findings readable at a glance. An open row is the opposite
+   situation: it is the one being read, its detail is already pushing the layout
+   down, and clipping its headline means the reader has to hover to learn what
+   the item even is — with the tooltip then covering the detail below it. */
+.row.is-open .row-summary .txt {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
 }
 .row.decided-skip .row-summary .txt {
   color: var(--dim);
@@ -1052,6 +1077,35 @@ button {
   font-size: var(--fs-sm);
   color: var(--dim);
   margin: 4px 0 10px;
+}
+/* The command to run somewhere else. Sized and spaced like something to act on
+   rather than a code fragment inside the prose, because it is the one step
+   between decisions sitting on disk and an agent actually having them. */
+.copy-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--ground);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.copy-line:hover {
+  border-color: var(--accent);
+}
+.copy-line .copy-hint {
+  color: var(--dim);
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
 }
 .returned pre {
   margin: 0;

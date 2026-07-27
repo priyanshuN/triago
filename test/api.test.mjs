@@ -469,3 +469,67 @@ test("editor deep-links stay off until the user opts in", async () => {
   assert.equal(res.status, 409);
   assert.match((await res.json()).reason, /disabled/);
 });
+
+/**
+ * Whether anything is actually listening, which is not the same as whether the
+ * card is open.
+ *
+ * A real triage runs longer than the call that posted the card, so by the time
+ * someone submits, the agent has usually stopped waiting. The page used to
+ * claim "agent waiting" for any open card and "decisions returned to agent"
+ * after every submit — both false in the common case, and the second one
+ * actively harmful: it tells the human the handoff is done when the decisions
+ * are in fact sitting on disk waiting to be collected.
+ */
+test("a card nothing is parked on does not report a waiter", async () => {
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+  ).json();
+
+  const detail = await (await fetch(`${BASE}/api/cards/${posted.id}`, { headers: auth() })).json();
+  assert.equal(detail.card.status, "open", "card is open");
+  assert.equal(detail.waiting, false, "open, but nothing is waiting on it");
+
+  const list = await (await fetch(`${BASE}/api/cards`, { headers: auth() })).json();
+  assert.equal(list.cards.find((c) => c.id === posted.id).waiting, false);
+});
+
+test("submitting with nobody parked reports delivered:false", async () => {
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+  ).json();
+
+  const res = await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
+    method: "POST",
+    headers: auth(),
+    body: JSON.stringify({ items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "skip" }] }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.delivered, false, "nothing was listening, so nothing was delivered");
+  // The decisions still exist — not delivered is not the same as lost.
+  const after = await (await fetch(`${BASE}/api/cards/${posted.id}/decisions`, { headers: auth() })).json();
+  assert.equal(after.tally.fix, 1);
+});
+
+test("a parked wait is reported as a waiter, and receives the decisions", async () => {
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, { method: "POST", headers: auth(), body: JSON.stringify(CARD) })
+  ).json();
+
+  const parked = fetch(`${BASE}/api/cards/${posted.id}/decisions?wait=30`, { headers: auth() });
+  await sleep(250); // let the long-poll register before asking about it
+
+  const detail = await (await fetch(`${BASE}/api/cards/${posted.id}`, { headers: auth() })).json();
+  assert.equal(detail.waiting, true, "something is parked on this card");
+
+  const res = await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
+    method: "POST",
+    headers: auth(),
+    body: JSON.stringify({ items: [{ id: "f1", decision: "fix" }, { id: "f2", decision: "defer" }] }),
+  });
+  assert.equal((await res.json()).delivered, true, "the parked call was handed the record");
+
+  const woken = await (await parked).json();
+  assert.equal(woken.tally.defer, 1, "and it woke with the decisions, not a timeout");
+});

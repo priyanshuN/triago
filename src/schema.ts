@@ -107,6 +107,14 @@ export const CardSummary = z.object({
   decided_at: z.string().optional(),
   open_items: z.number(),
   total_items: z.number(),
+  /**
+   * Is an agent blocked on this card *right now*? Live process state, attached
+   * by the server per request rather than stored: it is absent from disk and
+   * false after a restart, which is the truth. Distinct from `status: "open"`,
+   * which only says nobody has submitted yet — a card is normally still open
+   * long after the agent that posted it stopped listening.
+   */
+  waiting: z.boolean().optional(),
 });
 export type CardSummary = z.infer<typeof CardSummary>;
 

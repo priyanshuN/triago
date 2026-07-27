@@ -54,9 +54,27 @@ type WaitOutcome =
 const waiters = new Map<string, Set<(outcome: WaitOutcome) => void>>();
 const streams = new Set<(e: Event) => void>();
 
-function wakeWaiters(id: string, record: DecisionsRecord): void {
-  for (const resolve of waiters.get(id) ?? []) resolve({ kind: "decided", record });
+/**
+ * Is an agent actually blocked on this card right now?
+ *
+ * A card being *open* is not the same thing, and conflating the two tells the
+ * human a lie in exactly the case that matters. A real triage outruns any tool
+ * timeout, so by the time someone submits, the agent that posted the card has
+ * usually stopped listening. "Open" stays true; "something is waiting" does not.
+ */
+function hasWaiter(id: string): boolean {
+  return (waiters.get(id)?.size ?? 0) > 0;
+}
+
+/** Returns how many waiters received the record. Zero means nobody heard it. */
+function wakeWaiters(id: string, record: DecisionsRecord): number {
+  let delivered = 0;
+  for (const resolve of waiters.get(id) ?? []) {
+    resolve({ kind: "decided", record });
+    delivered++;
+  }
   waiters.delete(id);
+  return delivered;
 }
 
 /** Called when a card is deleted out from under anything waiting on it. */
@@ -208,8 +226,24 @@ export function buildApp(token: string, port: number): Hono {
       shouldOpen = openBrowser(`${url}#t=${token}`);
       if (shouldOpen) writeState({ last_browser_open_at: Date.now() });
     }
+    // Say why, every time. The reason travels back to whoever posted the card,
+    // which for an MCP call is the agent — so when no tab appears the human is
+    // left with no tab and no explanation. The log is where they can find one.
+    console.log(
+      shouldOpen
+        ? `[triago] opened ${url}`
+        : `[triago] no tab for ${card.id} — ${decision.reason ?? "declined"} · open it with: triago open ${card.id}`,
+    );
     const items = card.type === "findings" ? card.findings.length : 1;
-    notify(card.title, `triago · ${card.type} · ${items} item${items === 1 ? "" : "s"}`);
+    // When a tab did open, the notification is a courtesy. When one did not, it
+    // is the only thing that reaches the human at all — so it has to carry the
+    // id, which is what they need to go and look at it.
+    notify(
+      card.title,
+      shouldOpen
+        ? `triago · ${card.type} · ${items} item${items === 1 ? "" : "s"}`
+        : `triago · ${items} item${items === 1 ? "" : "s"} · no tab opened — triago open ${card.id}`,
+    );
 
     return c.json(
       { id: card.id, url, opened_browser: shouldOpen, browser: decision.reason },
@@ -219,13 +253,21 @@ export function buildApp(token: string, port: number): Hono {
 
   app.get("/api/cards", (c) => {
     const session = c.req.query("session");
-    return c.json({ cards: listCards(session) });
+    // `waiting` is live process state, not something on disk, so it is attached
+    // here rather than in the store: after a restart nothing is waiting, which
+    // is the truth.
+    const cards = listCards(session).map((card) => ({ ...card, waiting: hasWaiter(card.id) }));
+    return c.json({ cards });
   });
 
   app.get("/api/cards/:id", (c) => {
     const found = lookupCard(c.req.param("id"));
     if (!found.ok) return c.json({ error: found.error }, found.status);
-    return c.json({ card: found.card, decisions: readDecisions(found.card.id) });
+    return c.json({
+      card: found.card,
+      decisions: readDecisions(found.card.id),
+      waiting: hasWaiter(found.card.id),
+    });
   });
 
   app.get("/api/cards/:id/decisions", async (c) => {
@@ -275,13 +317,16 @@ export function buildApp(token: string, port: number): Hono {
     }
     try {
       const record = submitDecisions(card, parsed.data);
-      wakeWaiters(card.id, record);
+      const delivered = wakeWaiters(card.id, record);
       broadcast({ type: "card.decided", id: card.id });
       const injected = tmuxInject(
         card.tmux_pane,
         `[triago] ${card.id} submitted — ${record.tally.fix} fix / ${record.tally.skip} skip / ${record.tally.discuss} discuss / ${record.tally.defer} defer`,
       );
-      return c.json({ decisions: record, tmux_injected: injected });
+      // `delivered` is what lets the page stop claiming the agent got this. It
+      // usually has not: submitting takes longer than the call that posted the
+      // card, so the honest next step is telling the agent to come back for it.
+      return c.json({ decisions: record, tmux_injected: injected, delivered: delivered > 0 });
     } catch (err) {
       if (err instanceof DecisionError) return c.json({ error: err.message }, err.status as 400);
       throw err;
