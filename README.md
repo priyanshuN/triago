@@ -1,7 +1,10 @@
 # triago
 
+[![npm](https://img.shields.io/npm/v/%40triago%2Fcli?color=cb3837&logo=npm)](https://www.npmjs.com/package/@triago/cli)
+[![node](https://img.shields.io/node/v/%40triago%2Fcli)](https://nodejs.org)
 [![ci](https://github.com/priyanshuN/triago/actions/workflows/ci.yml/badge.svg)](https://github.com/priyanshuN/triago/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/priyanshuN/triago/badge)](https://scorecard.dev/viewer/?uri=github.com/priyanshuN/triago)
+[![license](https://img.shields.io/npm/l/%40triago%2Fcli)](LICENSE)
 
 **A local decision surface for CLI coding agents.** The agent posts a card, you
 triage it in a browser, and your decisions come back to the agent as structured
