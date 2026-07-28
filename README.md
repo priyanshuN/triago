@@ -53,7 +53,9 @@ so there is only ever one thing to update. Do that with `/plugin update
 triago@triago`: third-party marketplaces do not auto-update unless you switch it
 on under `/plugin` → **Marketplaces**.
 
-**Anywhere else** — the CLI, another MCP client, a shell script, a Makefile:
+**Everywhere else** — Codex, another MCP client, the CLI on its own, a shell
+script, a Makefile. Codex has no plugin system, so this is its route rather than
+a lesser one; [wiring it to your agent](#codex) has the config:
 
 ```bash
 npm i -g @triago/cli
@@ -273,6 +275,9 @@ real triage, so raise it once in `~/.claude/settings.json`:
 ```
 
 ### Codex
+
+Codex has no plugin or marketplace mechanism, so registering the server is the
+route here, not a fallback from one. Install with `npm i -g @triago/cli` first.
 
 ```bash
 codex mcp add triago -- "$(command -v triago-mcp)"
