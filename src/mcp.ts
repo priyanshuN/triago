@@ -89,6 +89,14 @@ When to use it:
 - Short output, a single question, or anything needing no per-item response:
   stay in the terminal. Do not post a card for those.
 
+These tools may not be in your active set. A client carrying many tools can defer
+an MCP server's to a name-only listing, callable only once you have loaded their
+schemas — so at the moment you are holding a finished list, printing it costs
+nothing and posting it costs a lookup first. Do the lookup. In Claude Code that
+is ToolSearch on triago_post_findings; elsewhere it is whatever your client uses
+to load a deferred tool. The threshold above is not conditional on the tool being
+convenient to reach, and this is the point at which it is least convenient.
+
 What each returned decision obliges you to do:
 - fix — act on it. If the code is yours, make the change now, in this session.
   If you are reviewing someone else's work, acting on it means raising it where

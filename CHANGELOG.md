@@ -8,6 +8,30 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## [0.3.4] — 2026-07-28
+
+**Fixed**
+
+- The instructions told the agent to call a tool it may not have been holding.
+  A client carrying a large toolset can defer an MCP server's tools to a
+  name-only listing, callable only after their schemas are loaded — so at the
+  moment an agent finishes a review and decides what to do with the list,
+  printing costs nothing and posting costs a lookup first. The policy read
+  `call triago_post_findings instead of printing them`, which presumes the tool
+  is already to hand. Faced with a rule naming an unloaded tool, agents printed.
+
+  The instructions now say the tools may need loading and to do it. The note
+  sits inside `When to use it` rather than at the end, because the tail of a
+  long instructions string is what a host truncates first — and the trigger is
+  no use if it is the part that survives while the means of acting on it is not.
+
+  Measured rather than assumed. The same prompt, in the same workspace, before
+  and after: without the line, seven findings printed to the terminal and no
+  card; with it, the agent loaded the tool unprompted and posted eleven. The
+  earlier theory — that the trigger was losing because the instructions were
+  truncated — did not survive checking, since the threshold sat above the cut in
+  both sessions. It was never a delivery problem.
+
 ## [0.3.3] — 2026-07-28
 
 **Fixed**
