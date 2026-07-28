@@ -8,7 +8,19 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## [0.3.2] — 2026-07-28
+
+**Fixed**
+
+- The release script rewrote the version pin in `.mcp.json` but staged only
+  `.claude-plugin/plugin.json`, so the pin never entered the release commit. The
+  working tree looked correct while the tagged tree was a version behind. CI
+  caught it and refused to publish; the fix stages both files.
+
 ## [0.3.1] — 2026-07-28
+
+Tagged but never published — the release above describes why. Nothing exists on
+the registry under this version.
 
 **Fixed**
 
@@ -156,6 +168,7 @@ name `triago` for anybody — it is too close to an existing package called
 Tagged but never published; npm rejected the unscoped name. No 0.1.0 exists on
 the registry.
 
+[0.3.2]: https://github.com/priyanshuN/triago/releases/tag/v0.3.2
 [0.3.1]: https://github.com/priyanshuN/triago/releases/tag/v0.3.1
 [0.3.0]: https://github.com/priyanshuN/triago/releases/tag/v0.3.0
 [0.2.1]: https://github.com/priyanshuN/triago/releases/tag/v0.2.1
