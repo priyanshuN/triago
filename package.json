@@ -1,6 +1,6 @@
 {
   "name": "@triago/cli",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "module",
   "description": "Human-in-the-loop decision surface for CLI coding agents: the agent posts a card of findings, you triage them in a browser with the keyboard, and your decisions come back as structured data. Local-only, MCP-native.",
   "keywords": [
