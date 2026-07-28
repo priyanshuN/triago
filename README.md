@@ -34,6 +34,27 @@ your repo — it renders what an agent hands it and returns what you decided.
 
 ## Install
 
+**In Claude Code**, install it as a plugin. Two commands, and nothing touches
+your `PATH`:
+
+```
+/plugin marketplace add priyanshuN/triago
+/plugin install triago@triago
+```
+
+Claude Code fetches the package and starts the server itself, so there is no
+global install to keep current and no version manager anywhere in the chain —
+which removes the failure the manual route is prone to, described under [wiring
+it to your agent](#claude-code). Restart the session, or `/reload-plugins
+--force` if you would rather not.
+
+The plugin *is* the npm package below — same tarball, same version number —
+so there is only ever one thing to update. Do that with `/plugin update
+triago@triago`: third-party marketplaces do not auto-update unless you switch it
+on under `/plugin` → **Marketplaces**.
+
+**Anywhere else** — the CLI, another MCP client, a shell script, a Makefile:
+
 ```bash
 npm i -g @triago/cli
 ```
@@ -212,22 +233,11 @@ triago gives an agent a capability; your instruction file decides *when* it gets
 used. Do both — the second half is what stops long findings lists going back to
 the terminal out of habit.
 
-### Claude Code — as a plugin
+### Claude Code
 
-```bash
-/plugin marketplace add priyanshuN/triago
-/plugin install triago@triago
-```
-
-Then `/reload-plugins`. Nothing else: no global install, no PATH, and no version
-manager involved, because Claude Code fetches the package itself and runs it
-from a path it resolves. That sidesteps the failure below entirely, which is why
-it is the route to prefer.
-
-The plugin *is* the npm package — same tarball, same version number — so there
-is no second thing to keep up to date.
-
-### Claude Code — by hand
+**The plugin route [above](#install) already does this** — skip to Codex unless
+you have a reason to register the server by hand. The rest of this section is
+that reason, and the failure it invites.
 
 ```bash
 claude mcp add --scope user triago -- "$(command -v triago-mcp)"   # every project, not just this one
@@ -241,7 +251,12 @@ editor or desktop app launched from a dock or launcher never runs that profile,
 so the agent looks for a command it genuinely cannot see. The failure gives no
 hint at the cause. Resolving the path once, in the shell where nvm *is* active,
 sidesteps it for every version manager. Re-run the command after switching Node
-versions: a global install lives under the version that installed it.
+versions: a global install lives under the version that installed it — install
+under one and register under another and you will run the old build indefinitely,
+with nothing to say so.
+
+The plugin has none of these problems, because Claude Code resolves the path
+itself rather than asking your shell.
 
 To check the way the agent will see it rather than the way your shell does, spawn
 it with your shell's `PATH` removed:
@@ -354,7 +369,13 @@ your machine:
 - the interface serves its own fonts. A webfont fetched from a CDN would tell a
   third party each time you opened a review, and the CSP above blocks it anyway;
 - no telemetry, no network calls, no analytics. There is no phone-home to
-  disable.
+  disable. One precision, because the claim should be exact: installed as a
+  plugin, the server is launched with `npx`, which contacts the npm registry the
+  first time it runs a version you do not have cached. That is the install
+  fetching the package, and it is the same request `npm i -g` makes — but it
+  happens at first launch rather than at install time, so it is worth naming
+  rather than leaving you to discover it. The server itself, once running, makes
+  no outbound request in either route.
 
 ## Config
 
@@ -430,14 +451,19 @@ MIT, no CLA. Everyone is expected to follow the
 ## Status
 
 Today: findings and doc cards, the CLI with its full return ladder, the MCP
-adapter, token auth, and a test suite that runs on Node 20, 22 and 24.
+adapter, a Claude Code plugin, token auth, and a test suite that runs on Node 20,
+22 and 24.
 
 It was dogfooded on itself immediately — the first card triago ever displayed was
 a review of its own implementation, and the seven items marked `fix` were fixed
 before anything else shipped. Four of those were defects that reading the code
 would not have caught.
 
-Next: questions and draft cards, and packaging as a Claude Code plugin.
+Next: [question cards](https://github.com/priyanshuN/triago/issues/10), for when
+an agent needs answers rather than decisions. The first production review through
+this tool came back nine `discuss` to one `fix`, and every one of those comments
+was an answer — people were already using a findings card as a question card,
+because it was the only surface that collected a response per item.
 
 [MIT](LICENSE) © priyanshuN
 

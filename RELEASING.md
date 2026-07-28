@@ -35,7 +35,7 @@ from a repository like this will hit the same three walls.
 
 ```bash
 npm version patch          # or minor / major — writes package.json and tags
-git push && git push --tags
+git push origin main --follow-tags
 gh release create "v$(node -p 'require("./package.json").version')" --generate-notes
 ```
 
@@ -46,14 +46,60 @@ package.json, refuses if the package is still private, and only then publishes.
 To rehearse without publishing, run the workflow manually from the Actions tab
 with `publish` left off — it does everything except the final step.
 
-## After the first publish
+## Three files carry the version, and `npm version` writes all three
 
-Check the package page shows the **Provenance** section with the commit and
-workflow, then confirm the install path a stranger will actually use:
+The package is also a Claude Code plugin, so the version appears in
+`package.json`, in `.claude-plugin/plugin.json`, and again as the `npx` pin in
+`.mcp.json`. They are kept in step by `scripts/sync-plugin-version.mjs`, run from
+npm's `version` lifecycle script — which fires after the bump and *before* the
+commit, so what it rewrites is staged into the release commit. `npm version` is
+therefore the only correct way to bump; editing `package.json` by hand leaves the
+other two behind.
+
+Two failures here are silent, which is why both have tests:
+
+- **A stale `plugin.json` version is invisible.** Claude Code uses it as the
+  cache key for updates, so a version that does not move means `/plugin update`
+  answers *already at the latest version* forever while the new code sits unread
+  in the tarball. Nothing errors.
+- **A stale `npx` pin runs a different build than the manifest describes**, which
+  defeats the point of syncing at all.
+
+The staging is the part that bit: the script rewrote both files but the
+lifecycle hook staged only one, so the working tree was correct and the *tagged*
+tree was a version behind — a state where every local check passes. CI caught it
+and refused to publish. **Verify the tag, not your working tree:**
 
 ```bash
-npx @triago/cli@latest demo
+for f in package.json .claude-plugin/plugin.json .mcp.json; do
+  git show "v$(node -p 'require("./package.json").version'):$f" | grep -m1 -E '"version"|--package='
+done
 ```
+
+Release tags are immutable by repository ruleset, on purpose. A release that
+fails to publish is superseded by the next patch version, never by moving a tag —
+0.1.0 and 0.3.1 are both tagged and unpublished for this reason, and the
+changelog says so.
+
+## After publishing
+
+Check the package page shows the **Provenance** section with the commit and
+workflow, then confirm both install paths a stranger will actually use:
+
+```bash
+npx @triago/cli@latest demo                    # the CLI
+```
+
+```bash
+claude plugin marketplace update triago && claude plugin update triago@triago
+claude mcp list | grep triago                  # must say ✔ Connected
+```
+
+The second is not optional after any change to `.mcp.json`,
+`.claude-plugin/plugin.json` or the `files` array. `claude --plugin-dir .`
+**cannot** substitute for it: a checkout has `node_modules` beside `dist` and an
+installed plugin does not, so a plugin that is broken for every user loads
+perfectly from the repository. See [TESTING.md](TESTING.md) §7a.
 
 ## There is no npm credential in this repository
 

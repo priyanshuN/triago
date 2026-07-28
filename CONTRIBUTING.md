@@ -49,6 +49,12 @@ is enough to place most changes:
    lives in the `instructions` block in `src/mcp.ts`, not in anyone's
    `CLAUDE.md`. If you change what a decision means, change it there and the
    tests that assert it.
+6. **The npm package is also the Claude Code plugin.** The same tarball carries
+   `.claude-plugin/plugin.json` and `.mcp.json`, so the version lives in three
+   files and `npm version` syncs all three — never edit `package.json`'s version
+   by hand. If you touch any of those files or the `files` array, test an actual
+   install rather than `--plugin-dir`; [TESTING.md](TESTING.md) §7a explains why
+   the two are not the same thing, and what it cost to learn that.
 
 ## What a good change looks like
 

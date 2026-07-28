@@ -161,6 +161,41 @@ no `triago wait` involved. Without `MCP_TOOL_TIMEOUT` raised, expect the call to
 come back after ~60s with a card id and a hint to call `triago_await_decisions`;
 that is the designed fallback, not a bug.
 
+## 7a. The plugin, from a real install
+
+**`claude --plugin-dir .` does not test this**, and believing it did shipped a
+broken 0.3.0. A checkout has `node_modules` beside `dist`; an installed plugin
+does not, because Claude Code extracts the npm tarball and never runs `npm
+install` in the cache directory. A server that starts cleanly from the
+repository dies on `ERR_MODULE_NOT_FOUND` once installed, and the MCP transport
+reports that as nothing more than `Connection closed`. The working
+configuration and the broken one are indistinguishable under `--plugin-dir`.
+
+So test the install, not the checkout, after any release touching `.mcp.json`,
+`.claude-plugin/plugin.json` or the `files` array:
+
+```bash
+claude plugin marketplace update triago
+claude plugin update triago@triago      # or install, the first time
+claude plugin details triago            # version = the one you just published
+claude mcp list | grep triago           # must say ✔ Connected
+```
+
+`✘ Failed to connect` is the failure this section exists for. To see the error
+the transport swallows, run the command `claude mcp list` prints for that server
+by hand.
+
+Two more that fail silently, so confirm them while you are here:
+
+- **The version really moved.** `claude plugin details` reads it from the
+  plugin's own manifest, and Claude Code uses that as its update cache key. A
+  stale manifest means `/plugin update` reports *already at the latest version*
+  indefinitely while the new code sits unused in the tarball.
+- **You are not running two copies.** If the server is also registered by hand,
+  `claude mcp list` shows both `plugin:triago:triago` and `triago`, and every
+  session carries two identical sets of tools. Drop one:
+  `claude mcp remove triago -s user`.
+
 ## 8. Security spot-checks
 
 ```bash

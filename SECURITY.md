@@ -36,7 +36,7 @@ to `127.0.0.1`, and any local process can connect to an open port.
 
 | Surface | Control |
 |---|---|
-| Network exposure | binds `127.0.0.1` only; no runtime network calls at all, including fonts |
+| Network exposure | binds `127.0.0.1` only; the running server makes no outbound request at all, including fonts. As a Claude Code plugin it is launched by `npx`, which fetches the pinned version from the registry once if it is not cached — that is the install, not the server |
 | API access | bearer token in `~/.triago/token`, mode 0600, compared with `timingSafeEqual` |
 | DNS rebinding | `Host` header checked against a localhost allowlist |
 | Token handover | passed once in the URL fragment, which browsers never send to a server |
