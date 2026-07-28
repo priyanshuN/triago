@@ -122,6 +122,39 @@ test("the server ships instructions saying when to post and what each decision o
  * stops being spelled out, the tool starts talking past the human at exactly the
  * point where they took the trouble to explain something.
  */
+/**
+ * The first card posted by an agent that chose to on its own was a review of a
+ * pull request the human did not write — they were the reviewer, not the author.
+ * It closed with an offer to act on the fix items, which was faithful to the
+ * policy at the time ("act on it now, in this session") and impossible: there
+ * was no branch it had any business editing.
+ *
+ * The four verbs are right; what was missing was the addressee. A fix on your
+ * own code is an edit, a fix on someone else's is a review comment, and an agent
+ * that cannot tell the two apart either does nothing or does something worse.
+ */
+test("the instructions say where a fix goes when the code is not the agent's", () => {
+  const instructions = initResult.instructions ?? "";
+  assert.match(
+    instructions,
+    /someone else'?s|not yours|do not own/i,
+    "never acknowledges reviewing code the human did not write",
+  );
+  assert.match(
+    instructions,
+    /pull request/i,
+    "never names where a finding goes when there is no branch to edit",
+  );
+  assert.match(
+    instructions,
+    // \s+ not a literal space: the policy is hand-wrapped at 80 columns, so any
+    // phrase long enough to matter can have a newline dropped into the middle of
+    // it by a later reflow.
+    /never\s+editing\s+their\s+branch/i,
+    "does not rule out editing someone else's branch",
+  );
+});
+
 test("the instructions tell the agent the comment outranks the verb", () => {
   const instructions = initResult.instructions ?? "";
   assert.match(instructions, /comment/i, "never mentions comments at all");
@@ -217,6 +250,58 @@ test("triago_await_decisions returns pending rather than hanging forever", async
   const payload = JSON.parse(awaited.result.content[0].text);
   assert.equal(payload.status, "pending");
   assert.equal(payload.card_id, cards[0].id);
+});
+
+/**
+ * The zero-second check, which the shipped policy names as the thing to run at
+ * the top of every turn while a card is outstanding.
+ *
+ * It was a no-op, for the least visible reason available: waitForDecisions
+ * guarded its polling loop with `while (Date.now() < deadline)`, and a deadline
+ * of `now + 0` is already in the past, so the body never ran and nothing ever
+ * asked the server. Every zero-wait call answered "pending" — including for
+ * cards decided hours earlier. The suite missed it because every other test
+ * waits with a real duration, so the one value the instructions actually
+ * recommend was the one value never exercised. An agent following the policy
+ * would never collect a decision it had not synchronously blocked for.
+ */
+test("wait_seconds 0 reads a decided card rather than always reporting pending", async () => {
+  const posted = await rpc("tools/call", {
+    name: "triago_post_findings",
+    arguments: {
+      title: "Zero-wait pickup",
+      session: "MCP-ZERO",
+      wait_seconds: 0,
+      findings: [{ severity: "low", summary: "decide me" }],
+    },
+  });
+  const { card_id } = JSON.parse(posted.result.content[0].text);
+
+  const before = await rpc("tools/call", {
+    name: "triago_await_decisions",
+    arguments: { card_id, wait_seconds: 0 },
+  });
+  assert.equal(
+    JSON.parse(before.result.content[0].text).status,
+    "pending",
+    "an undecided card must still answer pending, and without waiting",
+  );
+
+  const token = fs.readFileSync(path.join(HOME, "token"), "utf8").trim();
+  const res = await fetch(`http://127.0.0.1:${PORT}/api/cards/${card_id}/decisions`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ items: [{ id: "f1", decision: "fix" }] }),
+  });
+  assert.equal(res.status, 200);
+
+  const after = await rpc("tools/call", {
+    name: "triago_await_decisions",
+    arguments: { card_id, wait_seconds: 0 },
+  });
+  const payload = JSON.parse(after.result.content[0].text);
+  assert.equal(payload.status, "decided", "a decided card must come back on a zero-second check");
+  assert.equal(payload.tally.fix, 1);
 });
 
 /**

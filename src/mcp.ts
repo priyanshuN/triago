@@ -90,11 +90,21 @@ When to use it:
   stay in the terminal. Do not post a card for those.
 
 What each returned decision obliges you to do:
-- fix — act on it now, in this session.
-- skip — drop it; do not raise it again on this branch.
+- fix — act on it. If the code is yours, make the change now, in this session.
+  If you are reviewing someone else's work, acting on it means raising it where
+  the review lives — a comment on their pull request — never editing their
+  branch.
+- skip — drop it; do not raise it again for this change.
 - discuss — the human has something to say about this one before you act.
 - defer — real, but out of scope for now: record it as tracked follow-up work.
   Never silently treat a defer as a skip.
+
+Whose code it is decides where a fix goes, so settle that before you post, not
+after. Reviewing someone else's pull request is the case that catches agents
+out: the findings are yours, the branch is not, and offering to "fix" them is a
+promise to edit code you have no business touching. Say which of the two you are
+doing when you hand the card over, so the human is deciding against the right
+question.
 
 Read the comment before acting on the verb. The comment is the substance; the
 verb only says how to file it. A discuss carrying a comment is the human's
@@ -137,7 +147,7 @@ server.registerTool(
   "triago_post_findings",
   {
     title: "Post findings for triage",
-    description: `Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Prefer this over printing more than about five findings in the terminal: the human triages each item as ${VERBS} with optional comments, and the tool returns those decisions as structured data. Each decision obliges a specific follow-up — fix now, drop a skip, stop and ask on a discuss, and record a defer as tracked follow-up work rather than dropping it.`,
+    description: `Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Prefer this over printing more than about five findings in the terminal: the human triages each item as ${VERBS} with optional comments, and the tool returns those decisions as structured data. Each decision obliges a specific follow-up — act on a fix (edit it where the code is yours, raise it on the pull request where it is not), drop a skip, stop and ask on a discuss, and record a defer as tracked follow-up work rather than dropping it.`,
     inputSchema: {
       title: z
         .string()

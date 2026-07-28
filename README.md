@@ -187,6 +187,13 @@ between "this isn't a problem" and "this is a problem for later". What filing
 means is yours to define (an issue, a ticket comment, a line in a plan file); triago
 just makes the distinction explicit in the returned payload.
 
+What a **fix** costs depends on whose code it is. On your own branch it is an
+edit. On a review of someone else's pull request the agent has no business
+touching their branch, so acting on it means posting the finding as a review
+comment — same verb, different destination. The shipped policy says so, but it
+is worth knowing when you triage a card built from a PR you do not own: you are
+deciding what gets *said*, not what gets changed.
+
 After every decision, focus jumps to the next *undecided* finding, so a twelve
 item review is twelve keystrokes. Submit stays disabled until nothing is
 undecided; `rest → skip` handles the tail when you have made the calls that
@@ -319,9 +326,10 @@ prompt). Something like:
 
 > Findings lists longer than five items, or judgment documents over ~80 lines, go
 > to a triago card (`triago findings <file> --wait`, or `triago_post_findings`) instead of
-> being printed. Act on the returned decisions per item: **fix** now, **skip**
-> means drop it, **discuss** means stop and ask, **defer** means record it as
-> tracked follow-up work. Short output stays in the terminal.
+> being printed. Act on the returned decisions per item: **fix** means act on it
+> (edit it if the code is ours, raise it on the pull request if it is not),
+> **skip** means drop it, **discuss** means stop and ask, **defer** means record
+> it as tracked follow-up work. Short output stays in the terminal.
 
 Be explicit about what each decision obliges the agent to do. Without that,
 `defer` quietly becomes `skip` and the card was pointless.

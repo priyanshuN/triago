@@ -8,6 +8,36 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## [0.3.3] — 2026-07-28
+
+**Fixed**
+
+- `triago_await_decisions` with `wait_seconds: 0` never asked the server, so it
+  answered `pending` for every card — including cards decided hours earlier.
+  `waitForDecisions` guarded its polling loop with `while (Date.now() <
+  deadline)`, and a deadline of `now + 0` is already in the past, so the body
+  never ran.
+
+  This is the asynchronous pickup path, and the shipped instructions name
+  `wait_seconds: 0` as the check to run at the top of every turn while a card is
+  outstanding — so an agent following the policy exactly could only ever collect
+  decisions it had synchronously blocked for. A card triaged after the posting
+  call had returned was, in practice, never read. Zero now performs one real
+  non-blocking read.
+
+  The suite missed it because every other test waits with a real duration: the
+  one value the policy recommends was the one value never exercised.
+
+**Changed**
+
+- The decision policy now says where a `fix` goes when the code is not yours. It
+  previously read "act on it now, in this session", which is impossible on a
+  review of someone else's pull request — there is no branch the agent may edit.
+  Acting on a finding there means raising it as a review comment, and the
+  instructions say so now rather than leaving the agent to promise an edit it
+  has no business making. Found by using it: the first card an agent posted of
+  its own accord was a review where the human was the reviewer, not the author.
+
 ## [0.3.2] — 2026-07-28
 
 **Fixed**

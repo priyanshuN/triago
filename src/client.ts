@@ -162,8 +162,18 @@ export async function waitForDecisions(
   totalSeconds: number,
   port = DEFAULT_PORT,
 ): Promise<DecisionsRecord | null> {
-  const deadline = Date.now() + totalSeconds * 1000;
   let client = await ensureServer(port);
+  // Zero means "check, don't wait" — the cheap poll the MCP instructions tell an
+  // agent to run at the top of every turn while a card is outstanding. It has to
+  // be its own read, because the loop below is deadline-guarded: at zero the
+  // guard is false on first evaluation, nothing ever asks the server, and a card
+  // that was decided hours ago reports as pending forever. That is the whole
+  // asynchronous pickup path, so it fails in the direction nobody notices.
+  if (totalSeconds <= 0) {
+    const { decisions } = await client.getCard(id);
+    return decisions;
+  }
+  const deadline = Date.now() + totalSeconds * 1000;
   while (Date.now() < deadline) {
     const remaining = Math.ceil((deadline - Date.now()) / 1000);
     const chunk = Math.min(50, Math.max(1, remaining));
