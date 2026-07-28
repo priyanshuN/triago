@@ -2,7 +2,7 @@
   "mcpServers": {
     "triago": {
       "command": "npx",
-      "args": ["-y", "--package=@triago/cli@0.3.1", "triago-mcp"]
+      "args": ["-y", "--package=@triago/cli@0.3.2", "triago-mcp"]
     }
   }
 }
