@@ -8,6 +8,23 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## [0.3.1] — 2026-07-28
+
+**Fixed**
+
+- The plugin's MCP server failed to start once installed. Claude Code installs
+  an npm-sourced plugin by extracting the tarball, without running `npm install`
+  in the cache directory — so running `${CLAUDE_PLUGIN_ROOT}/dist/mcp.js` in
+  place died on `ERR_MODULE_NOT_FOUND`, surfacing only as `Connection closed`.
+  It now launches through `npx`, which fetches the dependencies and runs the
+  declared bin. The version is pinned so the plugin cannot silently run a
+  different build than its manifest describes.
+
+  This passed local testing under `--plugin-dir` because a checkout has
+  `node_modules` beside `dist`, which an installed plugin does not — the working
+  and broken configurations were indistinguishable until it was installed for
+  real.
+
 ## [0.3.0] — 2026-07-28
 
 **Added**
@@ -139,6 +156,7 @@ name `triago` for anybody — it is too close to an existing package called
 Tagged but never published; npm rejected the unscoped name. No 0.1.0 exists on
 the registry.
 
+[0.3.1]: https://github.com/priyanshuN/triago/releases/tag/v0.3.1
 [0.3.0]: https://github.com/priyanshuN/triago/releases/tag/v0.3.0
 [0.2.1]: https://github.com/priyanshuN/triago/releases/tag/v0.2.1
 [0.2.0]: https://github.com/priyanshuN/triago/releases/tag/v0.2.0

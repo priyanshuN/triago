@@ -65,19 +65,46 @@ test("the plugin name is a legal plugin name", () => {
   assert.match(plugin.name, /^[a-z0-9]+(-[a-z0-9]+)*$/, "must be kebab-case, no scope or slash");
 });
 
-test("the MCP server points at the built entry point", () => {
+/**
+ * The plugin starts its server through npx rather than by running
+ * ${CLAUDE_PLUGIN_ROOT}/dist/mcp.js directly, and that is not a style choice.
+ *
+ * Claude Code installs an npm-sourced plugin by extracting the tarball — no
+ * `npm install` in the cache directory, so there is no node_modules beside the
+ * extracted dist. Running the entry point in place dies immediately on
+ * `ERR_MODULE_NOT_FOUND` for @modelcontextprotocol/sdk, which surfaces only as
+ * "Connection closed" in `claude mcp list`. It passes under `--plugin-dir`
+ * against a checkout, because a checkout has node_modules — so the working
+ * configuration and the broken one look identical in local testing.
+ *
+ * npx fetches the package with its dependencies and runs the declared bin.
+ */
+test("the MCP server is launched in a way that resolves its dependencies", () => {
   const server = mcp.mcpServers[plugin.name];
   assert.ok(server, `.mcp.json declares no server named "${plugin.name}"`);
+  assert.equal(server.command, "npx");
 
-  const arg = server.args.find((a) => a.includes("${CLAUDE_PLUGIN_ROOT}"));
-  assert.ok(arg, "the server path must be relative to ${CLAUDE_PLUGIN_ROOT}, not absolute");
+  assert.ok(
+    !server.args.some((a) => a.includes("${CLAUDE_PLUGIN_ROOT}")),
+    "a path inside the plugin cache has no node_modules next to it and cannot start",
+  );
+  assert.ok(
+    server.args.includes("triago-mcp") && "triago-mcp" in pkg.bin,
+    "the bin npx runs must be one this package actually declares",
+  );
+});
 
-  // Resolve it the way Claude Code will: the plugin root is the package root.
-  const resolved = path.join(ROOT, arg.replace("${CLAUDE_PLUGIN_ROOT}/", ""));
-  assert.ok(fs.existsSync(resolved), `${arg} does not exist after a build (looked at ${resolved})`);
+/**
+ * The pin is the third copy of the version. Unpinned, npx would fetch whatever
+ * is newest when the server spawns — a different build than the manifest
+ * describes, which is precisely what syncing the manifest exists to prevent.
+ */
+test("the npx version pin matches the package version", () => {
+  const pin = mcp.mcpServers[plugin.name].args.find((a) => a.startsWith("--package="));
+  assert.ok(pin, ".mcp.json must pin the package version, not float to latest");
   assert.equal(
-    path.relative(ROOT, resolved),
-    pkg.bin["triago-mcp"],
-    "the plugin and the triago-mcp binary should start the same file",
+    pin,
+    `--package=${pkg.name}@${pkg.version}`,
+    "run `node scripts/sync-plugin-version.mjs`",
   );
 });

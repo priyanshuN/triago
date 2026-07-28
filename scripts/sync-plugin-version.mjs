@@ -18,27 +18,42 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const manifestPath = path.join(root, ".claude-plugin", "plugin.json");
+const { name, version } = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
-const { version } = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+/**
+ * Both files are rewritten by pattern rather than by parsing and re-serialising,
+ * so they keep their key order and formatting and the diff stays one line each.
+ */
+const edits = [
+  {
+    file: path.join(root, ".claude-plugin", "plugin.json"),
+    find: /("version":\s*)"[^"]*"/,
+    replace: `$1"${version}"`,
+    missing: "plugin.json has no version field to sync",
+  },
+  {
+    // The version pin in the plugin's npx invocation. Unpinned, the plugin
+    // would fetch whatever is newest at spawn time, which is a different build
+    // than the manifest describes and undoes the point of syncing at all.
+    file: path.join(root, ".mcp.json"),
+    find: new RegExp(`--package=${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}@[^"]*`),
+    replace: `--package=${name}@${version}`,
+    missing: `.mcp.json has no --package=${name}@… pin to sync`,
+  },
+];
 
-if (manifest.version === version) {
-  console.log(`plugin.json already at ${version}`);
-  process.exit(0);
+let changed = 0;
+for (const { file, find, replace, missing } of edits) {
+  const before = fs.readFileSync(file, "utf8");
+  if (!find.test(before)) {
+    console.error(`${missing} — add one`);
+    process.exit(1);
+  }
+  const after = before.replace(find, replace);
+  if (after === before) continue;
+  fs.writeFileSync(file, after);
+  console.log(`${path.basename(file)} → ${version}`);
+  changed++;
 }
 
-// Rewritten by hand rather than with JSON.stringify(manifest) so the file keeps
-// its key order and formatting, and the diff is one line rather than the whole
-// manifest reshuffled.
-const updated = fs
-  .readFileSync(manifestPath, "utf8")
-  .replace(/("version":\s*)"[^"]*"/, `$1"${version}"`);
-
-if (!/"version":\s*"/.test(updated)) {
-  console.error("plugin.json has no version field to sync — add one");
-  process.exit(1);
-}
-
-fs.writeFileSync(manifestPath, updated);
-console.log(`plugin.json ${manifest.version} → ${version}`);
+if (!changed) console.log(`plugin manifests already at ${version}`);
