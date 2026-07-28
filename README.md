@@ -212,7 +212,22 @@ triago gives an agent a capability; your instruction file decides *when* it gets
 used. Do both — the second half is what stops long findings lists going back to
 the terminal out of habit.
 
-### Claude Code
+### Claude Code — as a plugin
+
+```bash
+/plugin marketplace add priyanshuN/triago
+/plugin install triago@triago
+```
+
+Then `/reload-plugins`. Nothing else: no global install, no PATH, and no version
+manager involved, because Claude Code fetches the package itself and runs it
+from a path it resolves. That sidesteps the failure below entirely, which is why
+it is the route to prefer.
+
+The plugin *is* the npm package — same tarball, same version number — so there
+is no second thing to keep up to date.
+
+### Claude Code — by hand
 
 ```bash
 claude mcp add --scope user triago -- "$(command -v triago-mcp)"   # every project, not just this one

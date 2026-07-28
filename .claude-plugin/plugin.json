@@ -1,0 +1,14 @@
+{
+  "name": "triago",
+  "description": "Triage an agent's findings in a browser and hand back a decision per item. Local-only.",
+  "version": "0.2.1",
+  "author": {
+    "name": "priyanshuN",
+    "url": "https://github.com/priyanshuN"
+  },
+  "homepage": "https://github.com/priyanshuN/triago#readme",
+  "repository": "https://github.com/priyanshuN/triago",
+  "license": "MIT",
+  "keywords": ["mcp", "human-in-the-loop", "code-review", "triage"],
+  "mcpServers": "./.mcp.json"
+}

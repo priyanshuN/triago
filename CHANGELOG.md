@@ -8,6 +8,23 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## [0.3.0] — 2026-07-28
+
+**Added**
+
+- triago installs as a Claude Code plugin: `/plugin marketplace add
+  priyanshuN/triago` then `/plugin install triago@triago`. Claude Code fetches
+  the package and resolves the server path itself, so the install involves no
+  global install, no PATH and no version manager — which removes a real class of
+  failure, where registering `triago-mcp` by bare name works in your shell and
+  fails with a bare `ENOENT` in an app launched from a dock.
+- The plugin is the npm package rather than a second artifact: the same tarball
+  now carries `.claude-plugin/plugin.json` and `.mcp.json`, so both channels
+  publish together and share one version number. `npm version` syncs the
+  manifest, and a test fails if the two ever disagree — a stale plugin version
+  is invisible, because Claude Code uses it as an update cache key and would
+  tell installed users they are current when they are not.
+
 ## [0.2.1] — 2026-07-27
 
 **Added**
@@ -122,6 +139,7 @@ name `triago` for anybody — it is too close to an existing package called
 Tagged but never published; npm rejected the unscoped name. No 0.1.0 exists on
 the registry.
 
+[0.3.0]: https://github.com/priyanshuN/triago/releases/tag/v0.3.0
 [0.2.1]: https://github.com/priyanshuN/triago/releases/tag/v0.2.1
 [0.2.0]: https://github.com/priyanshuN/triago/releases/tag/v0.2.0
 [0.1.6]: https://github.com/priyanshuN/triago/releases/tag/v0.1.6

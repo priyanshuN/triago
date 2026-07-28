@@ -36,7 +36,9 @@
     "dist",
     "examples",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    ".claude-plugin/plugin.json",
+    ".mcp.json"
   ],
   "scripts": {
     "build": "npm run build:server && npm run build:web",
@@ -47,6 +49,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "TRIAGO_NO_BROWSER=1 node --test test/*.test.mjs",
+    "version": "node scripts/sync-plugin-version.mjs && git add .claude-plugin/plugin.json",
     "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {

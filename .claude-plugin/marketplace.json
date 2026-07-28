@@ -1,0 +1,28 @@
+{
+  "name": "triago",
+  "owner": {
+    "name": "priyanshuN",
+    "url": "https://github.com/priyanshuN"
+  },
+  "metadata": {
+    "description": "The triago plugin: a browser surface for triaging what an agent produced.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "triago",
+      "source": {
+        "source": "npm",
+        "package": "@triago/cli"
+      },
+      "description": "Post a list of findings to a browser card, decide each one with a keystroke, and get the decisions back as structured data. Runs on 127.0.0.1, makes no network calls.",
+      "homepage": "https://github.com/priyanshuN/triago#readme",
+      "license": "MIT",
+      "keywords": ["mcp", "human-in-the-loop", "code-review", "triage"],
+      "author": {
+        "name": "priyanshuN",
+        "url": "https://github.com/priyanshuN"
+      }
+    }
+  ]
+}
