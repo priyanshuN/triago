@@ -1,7 +1,7 @@
 {
   "name": "triago",
   "description": "Triage an agent's findings in a browser and hand back a decision per item. Local-only.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "author": {
     "name": "priyanshuN",
     "url": "https://github.com/priyanshuN"
