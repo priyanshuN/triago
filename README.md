@@ -53,9 +53,16 @@ so there is only ever one thing to update. Do that with `/plugin update
 triago@triago`: third-party marketplaces do not auto-update unless you switch it
 on under `/plugin` → **Marketplaces**.
 
-**Everywhere else** — Codex, another MCP client, the CLI on its own, a shell
-script, a Makefile. Codex has no plugin system, so this is its route rather than
-a lesser one; [wiring it to your agent](#codex) has the config:
+**Codex** takes the same marketplace — it reads `.claude-plugin/marketplace.json`
+as a compatibility path, so the plugin installs there unchanged:
+
+```bash
+codex plugin marketplace add priyanshuN/triago
+codex plugin add triago@triago
+```
+
+**Everywhere else** — another MCP client, the CLI on its own, a shell script, a
+Makefile. [Wiring it to your agent](#wiring-it-to-your-agent) has the config:
 
 ```bash
 npm i -g @triago/cli
@@ -283,13 +290,22 @@ real triage, so raise it once in `~/.claude/settings.json`:
 
 ### Codex
 
-Codex has no plugin or marketplace mechanism, so registering the server is the
-route here, not a fallback from one. Install with `npm i -g @triago/cli` first.
+Codex has plugins and marketplaces of its own, and the [Install](#install)
+section above is the shorter route — it reads `.claude-plugin/marketplace.json`
+as a compatibility path, so triago's marketplace works there with no separate
+manifest.
+
+Register the server by hand only if you want it outside the plugin. Install with
+`npm i -g @triago/cli` first.
 
 ```bash
 codex mcp add triago -- "$(command -v triago-mcp)"
 codex mcp get triago
 ```
+
+Do not do both. `codex plugin list` and `codex mcp list` are separate views, so a
+plugin install plus a manual registration gives every session two identical sets
+of tools with nothing warning you. `codex mcp remove triago` drops the manual one.
 
 Codex takes its timeouts per server in `~/.codex/config.toml`:
 

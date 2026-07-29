@@ -153,8 +153,8 @@ should succeed and the injection should be skipped silently.
 
 The suite tests the protocol; this tests your client's wiring.
 
-Both clients are already registered on this machine (`claude mcp list` and
-`codex mcp get triago` to confirm). Start a session and ask the agent to post a
+Both clients carry the plugin on this machine — confirm with `claude plugin
+details triago` and `codex plugin list`. Start a session and ask the agent to post a
 findings card and wait for you. It should block on
 the tool call while you triage, and receive the decisions as the tool result —
 no `triago wait` involved. Without `MCP_TOOL_TIMEOUT` raised, expect the call to
@@ -195,6 +195,10 @@ Two more that fail silently, so confirm them while you are here:
   `claude mcp list` shows both `plugin:triago:triago` and `triago`, and every
   session carries two identical sets of tools. Drop one:
   `claude mcp remove triago -s user`.
+
+  The same trap exists in Codex and is easier to miss there, because `codex
+  plugin list` and `codex mcp list` are separate views and neither mentions the
+  other. Check both; `codex mcp remove triago` drops the manual one.
 
 ## 8. Security spot-checks
 
