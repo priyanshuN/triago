@@ -24,6 +24,7 @@ import {
   Health,
   PROTOCOL,
   StoredCard,
+  formatTally,
 } from "./schema.js";
 import {
   DecisionError,
@@ -328,7 +329,7 @@ export function buildApp(token: string, port: number): Hono {
       broadcast({ type: "card.decided", id: card.id });
       const injected = tmuxInject(
         card.tmux_pane,
-        `[triago] ${card.id} submitted — ${record.tally.fix} fix / ${record.tally.skip} skip / ${record.tally.discuss} discuss / ${record.tally.defer} defer`,
+        `[triago] ${card.id} submitted — ${formatTally(record.tally)}`,
       );
       // `delivered` is what lets the page stop claiming the agent got this. It
       // usually has not: submitting takes longer than the call that posted the
