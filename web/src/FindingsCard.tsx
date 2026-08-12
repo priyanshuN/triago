@@ -30,8 +30,12 @@ const DECISION_KEYS: Record<Decision, string> = {
   skip: "s",
   discuss: "d",
   defer: "t",
+  agent: "a",
 };
 const DECISION_ORDER = Object.keys(DECISION_KEYS) as Decision[];
+/** Only where the verb alone would not say what it means to press it. */
+const DECISION_LABELS: Partial<Record<Decision, string>> = { agent: "Agent's call" };
+const labelOf = (d: Decision): string => DECISION_LABELS[d] ?? d[0]!.toUpperCase() + d.slice(1);
 type Group = { key: string; label: string | null; cls: string; items: StoredFinding[] };
 
 function buildGroups(card: StoredFindingsCard): Group[] {
@@ -176,7 +180,7 @@ export function FindingsCard({
   const [typing, setTyping] = useState(false);
 
   const counts = useMemo(() => {
-    const c = { fix: 0, skip: 0, discuss: 0, defer: 0, undecided: 0 };
+    const c = { fix: 0, skip: 0, discuss: 0, defer: 0, agent: 0, undecided: 0 };
     for (const f of card.findings) {
       const d = draft[f.id]?.decision;
       if (d) c[d]++;
@@ -272,12 +276,17 @@ export function FindingsCard({
     }
   };
 
-  const restToSkip = (): void => {
+  /**
+   * The tail, in one action. Bulk moves are deliberately mouse-only: there is no
+   * bulk undo, and a stray keystroke that decides forty findings at once is a
+   * worse failure than a click that takes a second longer.
+   */
+  const restTo = (decision: Decision): void => {
     const current = draftRef.current;
     const updated = { ...current };
     for (const f of card.findings) {
       if (!updated[f.id]?.decision) {
-        updated[f.id] = { comment: updated[f.id]?.comment ?? "", decision: "skip" };
+        updated[f.id] = { comment: updated[f.id]?.comment ?? "", decision };
       }
     }
     setDraft(updated);
@@ -383,6 +392,9 @@ export function FindingsCard({
         case "t":
           if (finding) decide(finding.id, "defer");
           break;
+        case "a":
+          if (finding) decide(finding.id, "agent");
+          break;
         case "u":
           if (finding) clear(finding.id);
           break;
@@ -419,11 +431,23 @@ export function FindingsCard({
           <span className="t t-skip">{counts.skip} skip</span>
           <span className="t t-disc">{counts.discuss} discuss</span>
           <span className="t t-defer">{counts.defer} defer</span>
+          <span className="t t-agent">{counts.agent} agent</span>
         </div>
-        {!locked && counts.undecided > 0 && counts.undecided < card.findings.length && (
-          <button type="button" className="mark-rest" onClick={restToSkip}>
-            rest → skip
-          </button>
+        {!locked && counts.undecided > 0 && (
+          <>
+            {/* Nothing decided yet is the "you take it" case, and it is a whole
+                mode of use rather than a tail: read the card, decide none of it,
+                hand the judgment back. Naming it "all" there stops the button
+                reading as if it only mops up leftovers. */}
+            <button type="button" className="mark-rest" onClick={() => restTo("agent")}>
+              {counts.undecided === card.findings.length ? "all" : "rest"} → agent
+            </button>
+            {counts.undecided < card.findings.length && (
+              <button type="button" className="mark-rest" onClick={() => restTo("skip")}>
+                rest → skip
+              </button>
+            )}
+          </>
         )}
         <button
           type="button"
@@ -564,7 +588,7 @@ export function FindingsCard({
                                 decide(finding.id, d);
                               }}
                             >
-                              {d[0]!.toUpperCase() + d.slice(1)}
+                              {labelOf(d)}
                               <kbd>{DECISION_KEYS[d]}</kbd>
                             </button>
                           ))}
@@ -713,6 +737,9 @@ export function FindingsCard({
             </span>
             <span className="k">
               <kbd>t</kbd> defer
+            </span>
+            <span className="k">
+              <kbd>a</kbd> agent's call
             </span>
             <span className="k">
               <kbd>c</kbd> comment

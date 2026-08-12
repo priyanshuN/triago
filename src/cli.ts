@@ -5,7 +5,7 @@ import { TriagoClient, ensureServer, probe, waitForDecisions } from "./client.js
 import { loadConfig } from "./config.js";
 import { formatClock } from "./format.js";
 import { DEFAULT_PORT, DIST_DIR, TRIAGO_HOME, readToken, version } from "./paths.js";
-import { CardInput, DecisionsRecord, Finding, StoredCard } from "./schema.js";
+import { CardInput, DecisionsRecord, Finding, StoredCard, formatTally } from "./schema.js";
 import { startServer } from "./server.js";
 import { openBrowser } from "./side.js";
 import { homeStats, lookupCard, markOpened } from "./store.js";
@@ -271,9 +271,7 @@ function renderCard(card: StoredCard, decisions: DecisionsRecord | null): string
     }
   }
   if (decisions) {
-    lines.push(
-      `  decided ${decisions.decided_at} · ${decisions.tally.fix} fix / ${decisions.tally.skip} skip / ${decisions.tally.discuss} discuss / ${decisions.tally.defer} defer`,
-    );
+    lines.push(`  decided ${decisions.decided_at} · ${formatTally(decisions.tally)}`);
     if (decisions.global_comment) lines.push(`  note: ${decisions.global_comment}`);
   }
   return lines.join("\n");

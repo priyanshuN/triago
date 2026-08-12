@@ -22,8 +22,13 @@ export type Severity = z.infer<typeof Severity>;
  * defer   — real, but not now: file it as tracked follow-up work and move on.
  *           (`skip` plus a comment used to carry this and lost the distinction
  *           between "not a problem" and "a problem for later".)
+ * agent   — your call: the human read it and is handing the judgment back.
+ *           The follow-through differs from every verb above — the agent has to
+ *           decide the item itself and then act — and it is the only honest way
+ *           to say "I don't have an opinion on this one" without leaving the
+ *           card undecided, which returns nothing at all.
  */
-export const decisions = ["fix", "skip", "discuss", "defer"] as const;
+export const decisions = ["fix", "skip", "discuss", "defer", "agent"] as const;
 export const Decision = z.enum(decisions);
 export type Decision = z.infer<typeof Decision>;
 
@@ -138,6 +143,14 @@ export const Tally = z.object({
   skip: z.number(),
   discuss: z.number(),
   defer: z.number(),
+  /**
+   * Defaulted, not required, because this key arrived after people had decided
+   * cards. The same object validates records read back from disk, and a
+   * decisions.json written before `agent` existed has a four-key tally — made
+   * required, it would fail `safeParse` on read, and every card the user had
+   * already triaged would come back as if it had never been decided.
+   */
+  agent: z.number().default(0),
 });
 export type Tally = z.infer<typeof Tally>;
 
@@ -172,8 +185,18 @@ export const Health = z.object({
 });
 export type Health = z.infer<typeof Health>;
 
+/**
+ * The counts as one line, in the schema's own verb order. Both places that
+ * print a tally — the tmux poke and `triago show` — used to spell the verbs out
+ * by hand, which is exactly how `defer` shipped missing from a description for a
+ * week. Adding a verb to the enum now reaches every line that reports one.
+ */
+export function formatTally(t: Tally): string {
+  return decisions.map((d) => `${t[d]} ${d}`).join(" / ");
+}
+
 export function tallyOf(items: readonly { decision: Decision }[]): Tally {
-  const t: Tally = { fix: 0, skip: 0, discuss: 0, defer: 0 };
+  const t: Tally = { fix: 0, skip: 0, discuss: 0, defer: 0, agent: 0 };
   for (const i of items) t[i.decision]++;
   return t;
 }

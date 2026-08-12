@@ -39,20 +39,23 @@ here, and it is worth stating what it excludes:
 The benchmark for this UI is not a code review tool, it is a keyboard-driven mail
 client. The measure is items dispositioned per minute with judgment intact.
 
-- `j`/`k` to move, `f`/`s`/`d`/`t` to decide, `c` to comment, `ctrl ⏎` to submit.
+- `j`/`k` to move, `f`/`s`/`d`/`t`/`a` to decide, `c` to comment, `ctrl ⏎` to submit.
 - **After every decision, focus jumps to the next *undecided* item.** This is the
   speed feature. Twelve findings become twelve keystrokes, and the human never
   hunts for what still needs attention.
 - Submit is disabled until nothing is undecided, so the returned payload is
   always complete. A `rest → skip` shortcut handles the tail once the calls that
-  matter have been made.
+  matter have been made, and `all → agent` covers the card you do not want to
+  decide at all — see below. Bulk moves are click-only on purpose: there is no
+  bulk undo, so a stray keystroke must not be able to decide forty findings.
 - The key legend is a permanent bar, not a help overlay, and it swaps to the
   comment-box keys while you type — the escape route is visible at the moment you
   need it.
 
-### Four decisions, not three
+### Five decisions, not three
 
-`fix`, `skip`, `discuss`, `defer`. The fourth exists because of a real failure:
+`fix`, `skip`, `discuss`, `defer`, `agent`. The fourth exists because of a real
+failure:
 the first serious triage put two of ten items in the wrong bucket. "Real, but not
 this milestone" had to be faked as `skip` plus a comment, which destroys the only
 distinction that matters to the agent — *not a problem* versus *a problem for
@@ -61,6 +64,26 @@ integrator (an issue, a ticket, a line in a plan file).
 
 The lesson generalises: a decision vocabulary is only worth adding to when the
 *follow-through* differs, not when the sentiment does.
+
+`agent` is the fifth verb held to that same rule, and it clears it: the
+follow-through is that nobody has decided the item yet, so the agent has to —
+and then has to say what it chose. No other verb leaves the call open.
+
+It was forced by the completeness requirement above. Submit is blocked until
+every item carries a decision, which is right — a partial payload is a payload
+the agent has to guess at — but it means the reader with no opinion has to
+manufacture one, and the cheapest lie to reach for is `skip`. That is the worst
+possible outcome: `skip` obliges the agent to *drop* the item and not raise it
+again, so a card the human was happy to delegate comes back as a card the human
+appeared to reject. Delegation was already happening, in other words; it just
+had no verb, so it was arriving as its own opposite.
+
+The delegation is bounded rather than total. The shipped instructions tell the
+agent to decide an `agent` item as one of the four real verbs, act, and state
+the choice in one line — and to hand back anything it could only resolve by
+editing someone else's branch or undoing the human's own work. A verb that meant
+"do whatever you like, quietly" would be worse than no verb, because the value
+of this tool is the record of who decided what.
 
 ## Architecture
 

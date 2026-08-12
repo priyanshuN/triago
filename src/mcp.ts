@@ -106,6 +106,14 @@ What each returned decision obliges you to do:
 - discuss — the human has something to say about this one before you act.
 - defer — real, but out of scope for now: record it as tracked follow-up work.
   Never silently treat a defer as a skip.
+- agent — your call. The human read the item and handed the judgment back:
+  choose one of the four above yourself, act on it, and state in one line what
+  you chose and why. It is a delegation, not a blank cheque — an item you would
+  only resolve by editing someone else's branch, undoing the human's own work,
+  or making a call they plainly care about goes back to them instead of being
+  settled quietly. A card that returns entirely as agent is the human saying
+  run with the lot; read the global comment first, because that is usually
+  where the one constraint they do have is written.
 
 Whose code it is decides where a fix goes, so settle that before you post, not
 after. Reviewing someone else's pull request is the case that catches agents
@@ -155,7 +163,7 @@ server.registerTool(
   "triago_post_findings",
   {
     title: "Post findings for triage",
-    description: `Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Prefer this over printing more than about five findings in the terminal: the human triages each item as ${VERBS} with optional comments, and the tool returns those decisions as structured data. Each decision obliges a specific follow-up — act on a fix (edit it where the code is yours, raise it on the pull request where it is not), drop a skip, stop and ask on a discuss, and record a defer as tracked follow-up work rather than dropping it.`,
+    description: `Post a list of review findings to the triago browser surface and get the human's per-item decisions back. Prefer this over printing more than about five findings in the terminal: the human triages each item as ${VERBS} with optional comments, and the tool returns those decisions as structured data. Each decision obliges a specific follow-up — act on a fix (edit it where the code is yours, raise it on the pull request where it is not), drop a skip, stop and ask on a discuss, record a defer as tracked follow-up work rather than dropping it, and decide an agent item yourself and say what you chose.`,
     inputSchema: {
       title: z
         .string()

@@ -209,7 +209,7 @@ test("post → long-poll timeout → submit → decisions match, and re-submit i
   });
   assert.equal(good.status, 200);
   const { decisions } = await good.json();
-  assert.deepEqual(decisions.tally, { fix: 1, skip: 1, discuss: 0, defer: 0 });
+  assert.deepEqual(decisions.tally, { fix: 1, skip: 1, discuss: 0, defer: 0, agent: 0 });
   assert.equal(decisions.items[0].summary, "one", "decisions echo the finding for context");
   assert.equal(decisions.items[0].file, "a/b.java");
   assert.equal(decisions.global_comment, "looks fine otherwise");
@@ -345,7 +345,7 @@ test("`triago wait` blocks, prints the decisions JSON and exits 0", async () => 
   assert.equal(await exited, 0);
   const parsed = JSON.parse(stdout);
   assert.equal(parsed.card, posted.id);
-  assert.deepEqual(parsed.tally, { fix: 2, skip: 0, discuss: 0, defer: 0 });
+  assert.deepEqual(parsed.tally, { fix: 2, skip: 0, discuss: 0, defer: 0, agent: 0 });
 });
 
 test("`triago wait` on an undecided card exits 3 so the agent can walk away", async () => {
@@ -402,7 +402,7 @@ test("defer is its own decision, distinct from skip, and round-trips to disk", a
   });
   assert.equal(res.status, 200);
   const { decisions } = await res.json();
-  assert.deepEqual(decisions.tally, { fix: 0, skip: 1, discuss: 0, defer: 1 });
+  assert.deepEqual(decisions.tally, { fix: 0, skip: 1, discuss: 0, defer: 1, agent: 0 });
   assert.equal(decisions.items[0].decision, "defer");
   assert.equal(decisions.items[0].comment, "next sprint");
 
@@ -414,7 +414,81 @@ test("defer is its own decision, distinct from skip, and round-trips to disk", a
     headers: auth(),
     body: JSON.stringify({ items: [{ id: "f1", decision: "later" }] }),
   });
-  assert.equal(bogus.status, 422, "only the four known verbs are accepted");
+  assert.equal(bogus.status, 422, "only the verbs in the schema are accepted");
+});
+
+/**
+ * The card the reader has no opinion on. Every item must carry a decision or
+ * the submission is refused, so before this verb existed the only way out was
+ * to fake an opinion on every row — and "skip" twelve times is a lie the agent
+ * then acts on. `agent` is the one honest thing to say there, and it has to
+ * survive the round trip like any other verb: the whole card comes back tallied
+ * under it, with the global comment carrying whatever constraint there was.
+ */
+test("a whole card can be handed back as the agent's own call", async () => {
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
+  ).json();
+  const res = await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
+    method: "POST",
+    headers: auth(),
+    body: JSON.stringify({
+      items: [
+        { id: "f1", decision: "agent" },
+        { id: "f2", decision: "agent" },
+      ],
+      global_comment: "your call on all of these, but nothing that touches the migration",
+    }),
+  });
+  assert.equal(res.status, 200);
+  const { decisions } = await res.json();
+  assert.deepEqual(decisions.tally, { fix: 0, skip: 0, discuss: 0, defer: 0, agent: 2 });
+  assert.equal(decisions.items[0].decision, "agent");
+  assert.match(decisions.global_comment, /migration/);
+
+  const reread = await (await fetch(`${BASE}/api/cards/${posted.id}`, { headers: auth() })).json();
+  assert.equal(reread.decisions.items[1].decision, "agent");
+});
+
+/**
+ * The upgrade path, which is the part a new tally key can quietly break. Cards
+ * decided before `agent` existed have a four-key tally on disk, and the same
+ * schema object validates what is read back — so a required fifth key would
+ * fail `safeParse`, and `readDecisions` returns null on a parse failure. Every
+ * card the user had already triaged would come back looking undecided.
+ */
+test("a decisions.json written before the agent verb still reads back", async () => {
+  const posted = await (
+    await fetch(`${BASE}/api/cards`, {
+      method: "POST",
+      headers: auth(),
+      body: JSON.stringify(CARD),
+    })
+  ).json();
+  await fetch(`${BASE}/api/cards/${posted.id}/decisions`, {
+    method: "POST",
+    headers: auth(),
+    body: JSON.stringify({
+      items: [
+        { id: "f1", decision: "fix" },
+        { id: "f2", decision: "defer" },
+      ],
+    }),
+  });
+
+  const file = path.join(HOME, "cards", posted.id, "decisions.json");
+  const record = JSON.parse(fs.readFileSync(file, "utf8"));
+  delete record.tally.agent;
+  fs.writeFileSync(file, JSON.stringify(record, null, 2));
+
+  const reread = await (await fetch(`${BASE}/api/cards/${posted.id}`, { headers: auth() })).json();
+  assert.ok(reread.decisions, "an old record must not read back as an undecided card");
+  assert.equal(reread.decisions.items[0].decision, "fix");
+  assert.equal(reread.decisions.tally.agent, 0, "the missing count reads as zero, not as absent");
 });
 
 test("the SSE stream pushes card.created and card.decided", async () => {

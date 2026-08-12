@@ -8,6 +8,34 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## [0.4.0] — 2026-08-12
+
+**Added**
+
+- **A fifth decision: `agent` — your call.** Submit stays blocked until every
+  item carries a decision, and that is right, but it left no way to say *I have
+  no opinion on this one*. The only way out was to invent an opinion, and the
+  cheapest one to reach for was `skip` — which obliges the agent to drop the
+  item and never raise it again. A card the reader was happy to delegate came
+  back looking like a card they had rejected.
+
+  `agent` is that missing answer, and it earns a verb by the rule the vocabulary
+  has always been held to: the follow-through differs. The agent has to decide
+  the item itself, act, and say in one line what it chose. The shipped MCP
+  instructions say so, and bound it — anything it could only resolve by editing
+  someone else's branch or undoing the human's own work comes back to them.
+
+  Press `a` on a finding. In the header, `all → agent` decides everything still
+  undecided in one click, so a card you want to hand over whole is one click and
+  `ctrl ⏎`; it reads `rest → agent` once you have made some calls yourself, for
+  the mixed case. Bulk moves stay click-only — there is no bulk undo, and a
+  stray keystroke must not be able to decide forty findings.
+
+  The returned payload is unchanged in shape: still one decision per item, now
+  with `agent` among the verbs and a fifth count in the tally. Both places that
+  print a tally derive it from the schema's own verb list, so the next verb
+  cannot ship missing from one of them the way `defer` did.
+
 ## [0.3.4] — 2026-07-28
 
 **Fixed**

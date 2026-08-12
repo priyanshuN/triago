@@ -26,7 +26,7 @@ Terminals are good at streaming work and bad at two things agents do constantly:
 showing you twelve findings with hierarchy, and letting you respond to each one.
 Today that response has to be typed as prose referring to item numbers — so in
 practice you accept the batch or skim it, exactly where per-item judgment matters
-most. triago turns that into an inbox: `j`/`k` to move, `f`/`s`/`d`/`t` to decide,
+most. triago turns that into an inbox: `j`/`k` to move, `f`/`s`/`d`/`t`/`a` to decide,
 `ctrl ⏎` to submit, and the agent picks up a decision per item.
 
 triago is not a client. It shows no transcript, runs no model, and never touches
@@ -125,7 +125,7 @@ When you hit submit, the blocked command prints this and exits 0:
 ```json
 {
   "card": "8712dddd",
-  "tally": { "fix": 6, "skip": 1, "discuss": 2, "defer": 1 },
+  "tally": { "fix": 6, "skip": 1, "discuss": 2, "defer": 1, "agent": 0 },
   "global_comment": "Fix the marked ones now, re-run the suite after.",
   "items": [
     { "id": "f1", "decision": "fix", "summary": "…", "file": "src/client.ts", "line": 148 },
@@ -166,6 +166,7 @@ visible as prose, and the server refuses a second submission.
 | `j` `k` / arrows | move between findings |
 | `⏎` or `o` | expand detail, scenario, suggested fix |
 | `f` `s` `d` `t` | fix / skip / discuss / defer — press again to clear |
+| `a` | agent's call — hand this one back for the agent to decide |
 | `u` | undo this decision |
 | `c` | comment on this finding |
 | `ctrl ⏎` | submit |
@@ -180,7 +181,7 @@ its own exits:
 | `alt j` / `alt k` | same, for fingers already trained on `j`/`k` |
 | `ctrl ⏎` | submit the whole card, from anywhere |
 
-## The four decisions
+## The five decisions
 
 | | |
 |---|---|
@@ -188,6 +189,7 @@ its own exits:
 | **skip** | not a real problem, or not worth doing at all |
 | **discuss** | needs a conversation before anything happens |
 | **defer** | real, but not now — file it as tracked follow-up work and move on |
+| **agent** | your call — the agent decides this one itself and says what it chose |
 
 `defer` exists because `skip` plus a comment cannot tell an agent the difference
 between "this isn't a problem" and "this is a problem for later". What filing
@@ -205,6 +207,18 @@ After every decision, focus jumps to the next *undecided* finding, so a twelve
 item review is twelve keystrokes. Submit stays disabled until nothing is
 undecided; `rest → skip` handles the tail when you have made the calls that
 matter.
+
+**When you have no calls to make**, that requirement used to force you to invent
+some. Not every card wants a per-item opinion — sometimes the honest answer to
+all twelve is *you decide*, and faking that as twelve skips is a lie the agent
+then acts on. **agent** says the real thing, and `all → agent` in the header
+applies it to everything still undecided in one click, so a card you are happy to
+delegate is one click and `ctrl ⏎`. The same button reads `rest → agent` once you
+have decided some of them, which is the mixed case: call the three that matter,
+hand back the other nine. What comes back is still a complete payload with a
+decision per item — the agent is told to choose one of the other four for each,
+act on it, and say what it chose, so nothing goes quiet. The global note is where
+to put the one constraint you do have.
 
 ## CLI
 
@@ -330,7 +344,7 @@ opencode, a Makefile, or a shell script with no integration at all.
 **If your agent speaks MCP, you don't have to.** The server hands the client an
 `instructions` block that reaches the model before it sees a single tool call:
 when a card is warranted (more than about five findings, or a document past ~80
-lines), when to stay in the terminal, what each of the four decisions obliges it
+lines), when to stay in the terminal, what each of the five decisions obliges it
 to do, and what to do if posting fails or the call times out. That policy ships
 with the install instead of living in your config, so triago behaves the same on
 a machine that has never heard of it.
@@ -345,7 +359,8 @@ prompt). Something like:
 > being printed. Act on the returned decisions per item: **fix** means act on it
 > (edit it if the code is ours, raise it on the pull request if it is not),
 > **skip** means drop it, **discuss** means stop and ask, **defer** means record
-> it as tracked follow-up work. Short output stays in the terminal.
+> it as tracked follow-up work, and **agent** means the call is ours to make —
+> decide it, act, and say what we chose. Short output stays in the terminal.
 
 Be explicit about what each decision obliges the agent to do. Without that,
 `defer` quietly becomes `skip` and the card was pointless.

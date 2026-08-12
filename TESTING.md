@@ -17,7 +17,7 @@ That suite already covers: token auth (401 without, wrong token), `Host` header
 rejection, card validation, long-poll timeout and wake-up, `triago wait` exit codes
 (0 on submit, 3 on timeout, 1 on a bad id), decisions matching the request,
 re-submit refusal, restart-from-disk, id-prefix resolution and ambiguity, the SSE
-stream, the API-404 fall-through, `defer` round-tripping, editor deep-links being
+stream, the API-404 fall-through, `defer` and `agent` round-tripping, editor deep-links being
 off by default, the browser auto-open policy (12 cards in a row must produce one
 tab, not twelve), and the four MCP tools with their generated schemas.
 
@@ -36,7 +36,7 @@ a tab (or prints the URL), and leaves the card open. Triage it:
 
 - `j` / `k` — move. The focused row gets an amber border.
 - `⏎` — expand. You should see detail, failure scenario, and a tinted diff.
-- `f` `s` `d` `t` — fix / skip / discuss / defer. **After each one focus should
+- `f` `s` `d` `t` `a` — fix / skip / discuss / defer / agent's call. **After each one focus should
   jump to the next undecided row** — that auto-advance is the whole speed claim,
   so notice whether it feels right.
 - `c` — comment on the focused finding. The box is a real multi-line field, so
@@ -49,6 +49,11 @@ a tab (or prints the URL), and leaves the card open. Triage it:
   below the fold.
 - Watch the header tally, and the `rest → skip` link that appears once you are
   part-way through.
+- On a fresh card the header offers `all → agent`; it should decide every row
+  and enable Submit in one click, and read `rest → agent` instead once some
+  rows are already decided. The submitted payload should carry `agent` on each
+  of those rows — the whole point is that the agent is told to decide them, not
+  that they came back blank.
 - `ctrl ⏎` — submit. The card locks, skips go struck-through and dim, and the
   returned payload appears at the bottom.
 
@@ -142,7 +147,7 @@ Post from inside a tmux pane so triago captures `$TMUX_PANE`, then submit in the
 browser. A line should be typed into that pane:
 
 ```
-[triago] <id> submitted — 3 fix / 2 skip / 1 discuss / 2 defer
+[triago] <id> submitted — 3 fix / 2 skip / 1 discuss / 2 defer / 0 agent
 ```
 
 Point this at an agent's pane, not a shell prompt — a shell will try to run the
