@@ -87,8 +87,23 @@ Check the package page shows the **Provenance** section with the commit and
 workflow, then confirm both install paths a stranger will actually use:
 
 ```bash
-npx @triago/cli@latest demo                    # the CLI
+V=$(node -p 'require("./package.json").version')
+(cd "$(mktemp -d)" && npx -y --package="@triago/cli@$V" triago demo)
 ```
+
+Two things in that line are load-bearing, and both were wrong before:
+
+- **`--package`.** npx cannot infer a command from `@triago/cli`: it looks for a bin named after
+  the unscoped package, and this one ships `triago` and `triago-mcp`. The short form every release
+  since 0.1.1 claimed to verify — `npx @triago/cli@latest demo` — has never run for anyone. A test
+  now checks every npx line in the docs against the declared bins.
+- **Running it somewhere else.** Inside this checkout, npm satisfies a pinned spec from the project
+  itself, finds no `triago` in the local `node_modules/.bin`, and dies on `command not found`
+  without ever contacting the registry. A check of the published tarball that never fetches the
+  published tarball is worse than no check, so it runs in an empty directory.
+
+The version comes from `package.json` rather than `latest`, so this exercises the build you just
+pushed — the same reason the tag is verified above and not the working tree.
 
 ```bash
 claude plugin marketplace update triago && claude plugin update triago@triago
