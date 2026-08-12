@@ -69,8 +69,18 @@ npm i -g @triago/cli
 ```
 
 Requires Node 20 or newer. That puts both `triago` and `triago-mcp` on your PATH — the commands are
-unscoped, only the package name is. `npx @triago/cli@latest demo` works too, if you would rather
-not install anything.
+unscoped, only the package name is. To try it without installing anything:
+
+```bash
+npx -y --package=@triago/cli@latest triago demo
+```
+
+The shorter `npx @triago/cli@latest demo` cannot work, and the error it gives —
+`could not determine executable to run` — does not say why. npx runs the bin named after the
+unscoped package, or the only bin if a package ships one; this package ships two, `triago` and
+`triago-mcp`, and neither is named `cli`. So `--package` names the package and the word after it
+names the command. It is the same reason the plugin's `.mcp.json` spells out
+`--package=@triago/cli@<version> triago-mcp` rather than relying on npx to guess.
 
 > The package is scoped because npm refuses the bare name `triago`: it is too
 > close to an existing package called `tiag`, so the registry will not create it
