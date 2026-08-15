@@ -225,7 +225,7 @@ export function buildApp(token: string, port: number): Hono {
     });
     let shouldOpen = false;
     if (decision.open) {
-      shouldOpen = openBrowser(`${url}#t=${token}`);
+      shouldOpen = await openBrowser(`${url}#t=${token}`);
       if (shouldOpen) {
         writeState({ last_browser_open_at: Date.now() });
         markOpened(card.id);
@@ -347,7 +347,7 @@ export function buildApp(token: string, port: number): Hono {
       .safeParse(await c.req.json().catch(() => null));
     if (!body.success) return c.json({ error: "invalid request" }, 422);
     reloadConfig();
-    const result = openInEditor(body.data.repo, body.data.file, body.data.line);
+    const result = await openInEditor(body.data.repo, body.data.file, body.data.line);
     return c.json(result, result.opened ? 200 : 409);
   });
 

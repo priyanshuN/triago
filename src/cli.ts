@@ -70,8 +70,31 @@ function parseArgs(argv: string[]): Args {
 const str = (v: string | boolean | undefined): string | undefined =>
   typeof v === "string" ? v : undefined;
 
+/**
+ * Write to stderr and exit, in that order and provably.
+ *
+ * Writes to a piped stdio stream are ASYNCHRONOUS on Windows, so
+ * `process.stderr.write(...)` followed by `process.exit()` on the next line can
+ * tear the process down mid-flush. The first Windows CI run caught it: both
+ * `triago wait` exit paths returned 0xC0000409 (3221226505) instead of the
+ * documented 3 and 1. An agent branching on the exit code reads that as a crash,
+ * and the message telling it what to do next never arrives.
+ *
+ * `fs.writeSync` on fd 2 is synchronous everywhere, so the message is out before
+ * the exit. Deliberately not `write(msg, cb)` with the exit in the callback: the
+ * callback is deferred, so code after it would keep running and `fail` would stop
+ * being `never` — the one property every caller here relies on.
+ */
+function writeErrSync(text: string): void {
+  try {
+    fs.writeSync(2, text);
+  } catch {
+    process.stderr.write(text);
+  }
+}
+
 function fail(message: string, code = 1): never {
-  process.stderr.write(`triago: ${message}\n`);
+  writeErrSync(`triago: ${message}\n`);
   process.exit(code);
 }
 
@@ -155,7 +178,7 @@ async function maybeWait(id: string, args: Args): Promise<void> {
   const seconds = Number(str(wait) ?? str(args.flags.timeout) ?? 540) || 540;
   const record = await waitForDecisions(id, seconds);
   if (!record) {
-    process.stderr.write(`triago: still undecided after ${seconds}s — later: triago wait ${id}\n`);
+    writeErrSync(`triago: still undecided after ${seconds}s — later: triago wait ${id}\n`);
     process.exit(3);
   }
   process.stdout.write(JSON.stringify(record, null, 2) + "\n");
@@ -249,7 +272,7 @@ async function cmdWait(args: Args): Promise<void> {
   const seconds = Number(str(args.flags.timeout) ?? 540) || 540;
   const record = await waitForDecisions(id, seconds);
   if (!record) {
-    process.stderr.write(`triago: card ${id} still undecided after ${seconds}s\n`);
+    writeErrSync(`triago: card ${id} still undecided after ${seconds}s\n`);
     process.exit(3);
   }
   process.stdout.write(JSON.stringify(record, null, 2) + "\n");
@@ -314,7 +337,7 @@ async function cmdOpen(args: Args): Promise<void> {
   const client = await ensureServer();
   const id = args._[1];
   const url = `${client.baseUrl}${id ? `/c/${id}` : ""}`;
-  const opened = openBrowser(`${url}#t=${client.token}`);
+  const opened = await openBrowser(`${url}#t=${client.token}`);
   // Opening it by hand is still someone seeing it, so it counts the same as an
   // auto-open — otherwise `status` reports a card as unseen when it is the very
   // one you are looking at.

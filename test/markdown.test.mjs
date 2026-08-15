@@ -8,13 +8,10 @@
  * useless; a doc card has to be able to link to a PR.
  */
 import assert from "node:assert/strict";
-import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { dist } from "./dist.mjs";
 
-const { escapeHtml, isSafeHref } = await import(
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "markdown.js")
-);
+const { escapeHtml, isSafeHref } = await dist("markdown.js");
 
 test("refuses javascript: however it is spelled", () => {
   const payloads = [

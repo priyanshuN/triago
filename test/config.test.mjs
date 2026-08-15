@@ -14,13 +14,10 @@
  * particular defaults — the point is that nothing nested comes back undefined.
  */
 import assert from "node:assert/strict";
-import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { dist } from "./dist.mjs";
 
-const { Config } = await import(
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "config.js")
-);
+const { Config } = await dist("config.js");
 
 test("an empty config parses into every field, nested ones included", () => {
   const cfg = Config.parse({});

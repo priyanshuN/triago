@@ -9,7 +9,7 @@ evening, whether a change is likely to be merged and what it needs to look like.
 git clone https://github.com/priyanshuN/triago && cd triago
 npm install
 npm run build     # dist/ carries the server and the prebuilt UI
-npm test          # ~50 tests, about 30 seconds
+npm test          # 67 tests, a few seconds
 ```
 
 Node 20 or newer. There is no `postinstall`, no native build step, and nothing to
@@ -62,7 +62,8 @@ is enough to place most changes:
   testable. The suite talks to the real thing — HTTP for the API, stdio
   JSON-RPC for MCP — rather than reaching into internals, so tests keep working
   when the implementation moves. Copy the style of the neighbouring test.
-- **`npm test && npm run typecheck` clean.** CI runs both on Node 20, 22 and 24.
+- **`npm test && npm run typecheck` clean.** CI runs both on Node 20, 22 and 24,
+  and the whole suite once more on Windows.
 - **Formatted.** `npm run format` writes it; `npm run format:check` is what CI
   runs. Style is a machine's job here, so nobody has to argue about it in
   review.

@@ -12,13 +12,10 @@
  * midnight is hour 00 everywhere and no hour is ever 24.
  */
 import assert from "node:assert/strict";
-import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { dist } from "./dist.mjs";
 
-const { formatClock } = await import(
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "format.js")
-);
+const { formatClock } = await dist("format.js");
 
 /** Local-time midnight, so the assertion does not depend on the runner's zone. */
 const atLocal = (h, m) => {
