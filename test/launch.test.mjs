@@ -14,9 +14,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
-
-const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
+import { dist } from "./dist.mjs";
 
 // paths.js resolves TRIAGO_HOME into module-level constants at import time, so a
 // test home has to exist BEFORE the first import — setting it afterwards points
@@ -38,7 +36,7 @@ process.on("exit", () => {
   fs.rmSync(REPO, { recursive: true, force: true });
 });
 
-const { browserCommand, openBrowser, openInEditor } = await import(path.join(dist, "side.js"));
+const { browserCommand, openBrowser, openInEditor } = await dist("side.js");
 
 // The mapping is a pure function precisely so every platform's answer can be
 // asserted from whichever platform is running the suite — the Windows arm is the

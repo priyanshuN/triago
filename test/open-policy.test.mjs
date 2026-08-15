@@ -4,13 +4,10 @@
  * safely reproduce.
  */
 import assert from "node:assert/strict";
-import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { dist } from "./dist.mjs";
 
-const { shouldOpenBrowser } = await import(
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "server.js")
-);
+const { shouldOpenBrowser } = await dist("server.js");
 
 const base = {
   mode: "first-card",
