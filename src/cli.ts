@@ -314,7 +314,7 @@ async function cmdOpen(args: Args): Promise<void> {
   const client = await ensureServer();
   const id = args._[1];
   const url = `${client.baseUrl}${id ? `/c/${id}` : ""}`;
-  const opened = openBrowser(`${url}#t=${client.token}`);
+  const opened = await openBrowser(`${url}#t=${client.token}`);
   // Opening it by hand is still someone seeing it, so it counts the same as an
   // auto-open — otherwise `status` reports a card as unseen when it is the very
   // one you are looking at.

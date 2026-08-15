@@ -20,16 +20,69 @@ function detached(cmd: string, args: string[]): void {
   }
 }
 
-/** Returns whether a tab was actually launched. TRIAGO_NO_BROWSER=1 suppresses it. */
-export function openBrowser(url: string): boolean {
+/**
+ * detached(), but it waits long enough to find out whether the process started.
+ * Node emits 'spawn' once the child is running and 'error' if it never was —
+ * exactly one of the two, and both arrive on the next tick or so. Nothing waits
+ * for the child to EXIT, so the caller is not blocked on a browser or an editor
+ * staying open.
+ */
+function detachedStarted(cmd: string, args: string[]): Promise<boolean> {
+  return new Promise((resolve) => {
+    let child: ReturnType<typeof spawn>;
+    try {
+      child = spawn(cmd, args, { detached: true, stdio: "ignore" });
+    } catch {
+      resolve(false);
+      return;
+    }
+    child.on("spawn", () => {
+      child.unref();
+      resolve(true);
+    });
+    child.on("error", () => resolve(false));
+  });
+}
+
+/**
+ * The launcher that hands a URL to the desktop's default browser.
+ *
+ * Windows used to be `start`, which is a **cmd.exe builtin rather than an
+ * executable**: spawn() ENOENTs on it every time, and because the spawn was
+ * detached with its errors swallowed, nothing was printed. `explorer` is a real
+ * executable and hands the URL to the registered handler. It is chosen over the
+ * more commonly cited `cmd /c start "" <url>` deliberately — cmd.exe re-parses
+ * its argument string, which would put a command interpreter back in the path of
+ * a URL and break this module's one invariant (argv arrays, never a shell).
+ *
+ * Exported so the platform mapping can be asserted from any host, rather than
+ * only on the platform that happens to be running the tests.
+ */
+export function browserCommand(platform: NodeJS.Platform = process.platform): string {
+  if (platform === "darwin") return "open";
+  if (platform === "win32") return "explorer";
+  return "xdg-open";
+}
+
+/**
+ * Hand the URL to the default browser. Resolves to whether the LAUNCHER started
+ * — not to whether a tab appeared, which no platform reports back and which this
+ * function never had any way to know. It previously returned a bare `true`, so a
+ * launcher that never ran still came back as success, and that value travels: it
+ * becomes `opened_browser` in the response to whoever posted the card, and feeds
+ * the "never opened in a browser" count in `triago status`. Reporting a tab that
+ * does not exist is worse than reporting none, because the notification that
+ * would have been someone's only signal is the thing it suppresses.
+ *
+ * TRIAGO_NO_BROWSER=1 suppresses the launch, and returns false because none
+ * happened.
+ */
+export async function openBrowser(url: string): Promise<boolean> {
   if (process.env.TRIAGO_NO_BROWSER) {
     console.log(`[triago] TRIAGO_NO_BROWSER set — not opening ${url.split("#")[0]}`);
     return false;
   }
-  const cmd =
-    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
-  detached(cmd, [url]);
-  return true;
+  return detachedStarted(browserCommand(), [url]);
 }
 
 /**
@@ -91,7 +144,7 @@ function notifyWithOpen(title: string, body: string, url: string): boolean {
     );
     child.on("error", () => {});
     child.stdout?.on("data", (chunk: Buffer) => {
-      if (chunk.toString().trim() === "open") openBrowser(url);
+      if (chunk.toString().trim() === "open") void openBrowser(url);
     });
     child.unref();
     return true;
@@ -138,7 +191,11 @@ export function resolveFile(repo: string | undefined, file: string): string | nu
   return null;
 }
 
-export function openInEditor(repo: string | undefined, file: string, line?: number): OpenResult {
+export async function openInEditor(
+  repo: string | undefined,
+  file: string,
+  line?: number,
+): Promise<OpenResult> {
   const cfg = loadConfig();
   if (!cfg.editor.enabled)
     return { opened: false, reason: "editor deep-links are disabled in ~/.triago/config.json" };
@@ -157,6 +214,15 @@ export function openInEditor(repo: string | undefined, file: string, line?: numb
       .replaceAll("{file}", file)
       .replaceAll("{line}", String(line ?? 1)),
   );
-  detached(argv[0]!, argv.slice(1));
+  // Same false success openBrowser had: the path resolved, so the old code
+  // reported `opened: true` without waiting to learn whether the editor binary
+  // exists. A typo in editor.command is the common case, and it looked identical
+  // to a working deep link.
+  if (!(await detachedStarted(argv[0]!, argv.slice(1))))
+    return {
+      opened: false,
+      reason: `could not start ${argv[0]} (check editor.command)`,
+      resolved: abs,
+    };
   return { opened: true, resolved: abs };
 }

@@ -14,12 +14,24 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         # The runtime floor is engines >=20; 24 is what development happens on.
         node: ["20", "22", "24"]
+        # Windows is a platform question, not a runtime one, so it runs once on
+        # the development version rather than across the whole node matrix.
+        # It is here because issue #7 — a launcher that could never work on
+        # Windows, reporting that it had — stayed open for want of a machine to
+        # check it on, and a hosted runner is that machine. What it proves is
+        # bounded: that the suite runs, that path handling and ~/.triago behave,
+        # and that the launcher is a real executable. Whether a tab actually
+        # appears is still unverified, and the code no longer claims it did.
+        include:
+          - os: windows-latest
+            node: "24"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -30,12 +42,14 @@ jobs:
       # Style is decided by a formatter so it never has to be decided in review.
       # One node version is enough — the answer cannot differ between them.
       - run: npm run format:check
-        if: matrix.node == '24'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
         env:
-          # Without this the suite would try to open browser tabs on the runner.
+          # Belt and braces: test/preload.mjs sets this too, so the suite is safe
+          # to run by hand. Stated here as well because a runner opening tabs is
+          # the failure this must never have.
           TRIAGO_NO_BROWSER: "1"
 
       # Advisories in the tree users actually install (--omit=dev). The gate sits
@@ -44,7 +58,7 @@ jobs:
       # be made green teaches people to ignore it. The full report always prints,
       # and Dependabot raises the rest as PRs.
       - name: Audit the shipped dependency tree
-        if: matrix.node == '24'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '24'
         run: |
           npm audit --omit=dev || true
           npm audit --omit=dev --audit-level=critical

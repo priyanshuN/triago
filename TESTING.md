@@ -6,11 +6,13 @@ fast.
 
 ```bash
 cd ~/Documents/tools/triago
-npm run build && npm test        # 26 tests, ~9s
+npm run build && npm test        # 67 tests, ~5s
 ```
 
-The suites set `TRIAGO_NO_BROWSER=1`, and one test asserts it: posting a card must
-never open a real tab during a test run. Use the same variable in any script of
+`test/preload.mjs` sets `TRIAGO_NO_BROWSER=1` for every test process, and one test
+asserts it: posting a card must never open a real tab during a test run. It lives
+in a preload rather than in front of the command because `VAR=1 cmd` is POSIX
+shell syntax, and the suite has to start on Windows too. Use the same variable in any script of
 your own that posts cards in a loop.
 
 That suite already covers: token auth (401 without, wrong token), `Host` header

@@ -8,6 +8,40 @@ This project follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 Before 1.0 the card format, the HTTP API and the MCP tool shapes may still
 change; when they do, it will be a minor bump and it will be said here.
 
+## Unreleased
+
+**Fixed**
+
+- **Windows: the browser never opened, and triago said it had**
+  ([#7](https://github.com/priyanshuN/triago/issues/7)). The launcher was
+  `start`, which is a cmd.exe builtin rather than an executable, so `spawn`
+  failed with `ENOENT` on every card — and because the spawn is detached with its
+  errors swallowed, nothing was printed. `openBrowser` then returned a hardcoded
+  `true` regardless, so the failure travelled: into `opened_browser` in the
+  response to whoever posted the card, and into the "never opened in a browser"
+  count in `triago status`. It is now `explorer`, a real executable, chosen over
+  the more commonly cited `cmd /c start "" <url>` because cmd.exe re-parses its
+  argument string and `src/side.ts` holds one invariant — argv arrays, never a
+  shell.
+- **A launch that fails is reported as a failure.** `openBrowser` and
+  `openInEditor` both resolve on the child's `spawn`/`error` events instead of
+  assuming success, so a missing launcher or a typo in `editor.command` now says
+  so. Neither claims a tab or a window *appeared* — no platform reports that
+  back, and the old docstring promising it was the reason the bug read as
+  intentional. Both are now `async`; callers inside this package were updated.
+- **`npm test` runs on Windows.** The script began `TRIAGO_NO_BROWSER=1 node …`,
+  which is POSIX shell syntax and a syntax error under cmd.exe, so the suite
+  could not start on the one platform whose bug this release fixes. The variable
+  moved to `test/preload.mjs`, loaded via `--import`.
+
+**Added**
+
+- **CI runs the suite on Windows.** Issue #7 stayed open for want of a machine to
+  verify on; `windows-latest` is that machine. It covers what a runner can cover
+  — the suite runs, path handling and `~/.triago` behave, the launcher is a real
+  executable. Whether a tab actually appears on a real desktop is still
+  unverified, and the code no longer claims otherwise.
+
 ## [0.4.0] — 2026-08-12
 
 **Added**
