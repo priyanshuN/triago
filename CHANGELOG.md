@@ -42,6 +42,14 @@ change; when they do, it will be a minor bump and it will be said here.
   executable. Whether a tab actually appears on a real desktop is still
   unverified, and the code no longer claims otherwise.
 
+  It found two unrelated Windows bugs on its first run. Five test files never
+  loaded, because `import()` of a bare absolute path parses `D:\…` as a URL with
+  the scheme `d:`; they go through `pathToFileURL` now. And `triago wait` returns
+  `0xC0000409` instead of its documented exit codes — that one is **not fixed**,
+  it is [#29](https://github.com/priyanshuN/triago/issues/29), and those two
+  assertions skip on Windows with a pointer to it rather than the whole job going
+  red on a known gap.
+
 ## [0.4.0] — 2026-08-12
 
 **Added**
