@@ -3,19 +3,24 @@ version: 2
 # Both ecosystems, because a compromised action is as good as a compromised
 # dependency: publish.yml holds the npm credential and stamps the provenance
 # attestation, so what runs in it matters as much as what ships in the tarball.
+# Monthly, one grouped PR per ecosystem: CI decides whether a bump is safe,
+# and a single PR a month is reviewable where a dozen weekly ones were not.
+# Security updates are not affected: Dependabot opens those as soon as an
+# advisory lands, outside this schedule.
 updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
     open-pull-requests-limit: 5
     groups:
-      # One PR for the dev toolchain instead of five: nothing here reaches a
-      # user's machine, so they only need to pass CI, not individual review.
-      dev-tooling:
-        dependency-type: development
+      npm:
+        patterns: ["*"]
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
